@@ -1,0 +1,23 @@
+{
+  "name": "radon-transform",
+  "version": "1.0.0",
+  "description": "An implementation of various radon transform algorithms in python",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "Electron",
+    "Python",
+    "zerorpc"
+  ],
+  "author": "liort",
+  "license": "Apache2",
+  "dependencies": {
+    "zerorpc": "git+https://github.com/fyears/zerorpc-node.git"
+  },
+  "devDependencies": {
+    "electron": "^1.8.8",
+    "electron-packager": "^9.0.1"
+  }
+}
