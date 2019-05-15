@@ -41,7 +41,7 @@ let mainWindow = null;
 const createWindow = () => {
   mainWindow = new BrowserWindow({width: 1280, height: 1080});
   mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'views/index.html'), 
+    pathname: path.join(__dirname, 'public/views/index.html'), 
     protocol: 'file:',
     slashes: true
   }));
