@@ -1,96 +1,67 @@
-const electron = require('electron')
-const app = electron.app
-const BrowserWindow = electron.BrowserWindow
-const path = require('path')
+const { app, BrowserWindow } = require('electron')
+const path = require('path');
+const url = require('url');
+require("./public/js/config");
 
+// Python Server
+const PY_FOLDER = './';
+const PY_MODULE = 'manage' ;
 
-/*************************************************************
- * py process
- *************************************************************/
-
-const PY_DIST_FOLDER = 'pycalcdist'
-const PY_FOLDER = 'pycalc'
-const PY_MODULE = 'api' // without .py suffix
-
-let pyProc = null
-let pyPort = null
-
-const guessPackaged = () => {
-  const fullPath = path.join(__dirname, PY_DIST_FOLDER)
-  return require('fs').existsSync(fullPath)
-}
+let pyProc = null;
 
 const getScriptPath = () => {
-  if (!guessPackaged()) {
-    return path.join(__dirname, PY_FOLDER, PY_MODULE + '.py')
-  }
-  if (process.platform === 'win32') {
-    return path.join(__dirname, PY_DIST_FOLDER, PY_MODULE, PY_MODULE + '.exe')
-  }
-  return path.join(__dirname, PY_DIST_FOLDER, PY_MODULE, PY_MODULE)
-}
-
-const selectPort = () => {
-  pyPort = 4242
-  return pyPort
-}
+  return path.join(__dirname, PY_FOLDER, PY_MODULE + '.py')
+};
 
 const createPyProc = () => {
-  let script = getScriptPath()
-  let port = '' + selectPort()
+  let script = getScriptPath();
+  console.log(script);
+  pyProc = require('child_process').spawn('python', [script, "runserver"],{ windowsHide : true });
 
-  if (guessPackaged()) {
-    pyProc = require('child_process').execFile(script, [port])
-  } else {
-    pyProc = require('child_process').spawn('python', [script, port])
-  }
- 
   if (pyProc != null) {
-    //console.log(pyProc)
-    console.log('child process success on port ' + port)
+    console.log('python server success started');
+  } else {
+    console.log('cannot start python server, is python installed?')
   }
-}
+};
 
 const exitPyProc = () => {
-  pyProc.kill()
-  pyProc = null
-  pyPort = null
-}
-
-app.on('ready', createPyProc)
-app.on('will-quit', exitPyProc)
+  process.kill(-pyProc.pid);
+  pyProc = null;
+  pyPort = null;
+};
 
 
-/*************************************************************
- * window management
- *************************************************************/
+app.on('ready', createPyProc);
+app.on('will-quit', exitPyProc);
 
-let mainWindow = null
+// Electron Window Management
+let mainWindow = null;
 
 const createWindow = () => {
-  mainWindow = new BrowserWindow({width: 800, height: 600})
-  mainWindow.loadURL(require('url').format({
-    pathname: path.join(__dirname, 'index.html'),
+  mainWindow = new BrowserWindow({width: 1280, height: 1080});
+  mainWindow.loadURL(url.format({
+    pathname: path.join(__dirname, 'views/index.html'), 
     protocol: 'file:',
     slashes: true
-  }))
-  mainWindow.webContents.openDevTools()
+  }));
+  mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', () => {
-    mainWindow = null
+    mainWindow = null;
   })
-}
+};
 
-app.on('ready', createWindow)
+app.on('ready', createWindow);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
-})
+});
 
 app.on('activate', () => {
   if (mainWindow === null) {
     createWindow()
   }
-})
+});

@@ -8,16 +8,20 @@
   },
   "keywords": [
     "Electron",
-    "Python",
-    "zerorpc"
+    "Python"
   ],
   "author": "liort",
   "license": "Apache2",
-  "dependencies": {
-    "zerorpc": "git+https://github.com/fyears/zerorpc-node.git"
-  },
   "devDependencies": {
-    "electron": "^1.8.8",
-    "electron-packager": "^9.0.1"
+    "electron": "^5.0.1",
+    "electron-packager": "^9.0.1",
+    "gulp": "^4.0.2"
+  },
+  "dependencies": {
+    "bootstrap": "^4.3.1",
+    "bootstrap-material-design": "^4.1.1",
+    "jquery": "^3.4.1",
+    "popper": "^1.0.1",
+    "vue": "^2.6.10"
   }
 }

@@ -1,6 +1,6 @@
-api.spec
-.venv/
 node_modules/
 build/
 dist/
-pycalcdist/
+.idea/
+.vscode/
+__pycache__

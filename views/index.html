@@ -3,16 +3,22 @@
   <head>
     <meta charset="UTF-8">
     <title>Radon Transform</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   </head>
-  <body>
-    <h1>Hello World</h1>
-    <p> We are using Node.js <script>document.write(process.versions.node)</script>,
-    Chromium <script>document.write(process.versions.chrome)</script>,
-    and Electron <script>document.write(process.versions.electron)</script>.</p>
-    <div id="pythonResult"></div>
+  <body>      
+      <div id="app">
+          {{ message }}
+      </div>
+      <script>      
+      var app = new Vue({
+          el: '#app',
+          data: {
+            message: 'Waiting for response from python server...'
+          }
+        })
+      fetch("http://localhost:8000/test")
+                 .then(response => response.text())
+                 .then(text => app.message=text);
+      </script>
   </body>
-
-  <script>
-    require('../js/renderer.js');
-  </script>
 </html>
