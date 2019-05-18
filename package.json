@@ -1,27 +1,38 @@
 {
-  "name": "radon-transform",
-  "version": "1.0.0",
-  "description": "An implementation of various radon transform algorithms in python",
+  "name": "radon_transform",
+  "version": "0.1.0",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
-  },
-  "keywords": [
-    "Electron",
-    "Python"
-  ],
-  "author": "liort",
-  "license": "Apache2",
-  "devDependencies": {
-    "electron": "^5.0.1",
-    "electron-packager": "^9.0.1",
-    "gulp": "^4.0.2"
+    "start": "electron .",
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@vue/eslint-config-prettier": "^4.0.1",
     "bootstrap": "^4.3.1",
-    "bootstrap-material-design": "^4.1.1",
-    "jquery": "^3.4.1",
-    "popper": "^1.0.1",
-    "vue": "^2.6.10"
+    "bootstrap-vue": "^2.0.0-rc.20",
+    "core-js": "^2.6.5",
+    "lodash": "^4.17.11",
+    "vue": "^2.6.10",
+    "vue-material": "^1.0.0-beta-11"
+  },
+  "author": "liort",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.7.0",
+    "@vue/cli-plugin-eslint": "^3.7.0",
+    "@vue/cli-service": "^3.7.0",
+    "babel-eslint": "^10.0.1",
+    "electron": "^5.0.1",
+    "electron-packager": "^9.1.0",
+    "eslint": "^5.16.0",
+    "eslint-plugin-vue": "^5.0.0",
+    "html-webpack-plugin": "^4.0.0-beta.5",
+    "less": "^3.9.0",
+    "less-loader": "^5.0.0",
+    "node-sass": "^4.9.0",
+    "sass-loader": "^7.1.0",
+    "vue-template-compiler": "^2.5.21"
   }
 }
