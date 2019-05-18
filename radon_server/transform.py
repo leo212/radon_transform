@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from . import radon_dss
 
 
-def index():
+def index(request):
     radon_dss.test_dss("images/lenna128x128.png")
     response = HttpResponse("OK")
     return response

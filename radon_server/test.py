@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 
 
-def index():
+def index(request):
     response = HttpResponse("OK")
     return response
