@@ -18,9 +18,14 @@ from django.urls import path
 
 from . import test
 from . import transform
+from . import upload
+
+from django.views.decorators.csrf import csrf_exempt
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('test/', test.index, name='index'),
-    path('transform/', transform.index, name='index')
+    path('test/', test.get_status, name='get_status'),
+    path('get_filelist/', test.get_filelist, name='get_filelist'),
+    path('transform/', transform.index, name='index'),
+    path('upload/', csrf_exempt(upload.upload_file), name='upload')
 ]

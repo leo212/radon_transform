@@ -68,6 +68,9 @@ CORS_ALLOW_HEADERS = (
     'x-requested-with',
 )
 
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+
 ROOT_URLCONF = 'radon_server.urls'
 
 TEMPLATES = [
