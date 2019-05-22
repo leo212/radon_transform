@@ -41,3 +41,8 @@
     color: #fff;
     padding: 0;
 }
+
+.image-list {
+    display: flex;
+    flex-direction: column;
+}

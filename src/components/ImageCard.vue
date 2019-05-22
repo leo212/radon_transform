@@ -2,11 +2,11 @@
   <md-card>
     <md-card-media-cover md-solid>
       <md-card-media md-ratio="1:1">
-        <img :src="imageFilename" alt="Image" />
+        <img :src="filename" alt="Image" />
       </md-card-media>
       <md-card-area>
         <md-card-header>
-          <span class="md-title">imagefile.png</span>
+          <span class="md-title">{{ filename }}</span>
           <span class="md-subhead"></span>
         </md-card-header>
 
@@ -25,7 +25,8 @@
 
 <script>
 export default {
-  name: "ImageCard"
+  name: "ImageCard",
+  props: ["filename"]
 };
 </script>
 
