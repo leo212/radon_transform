@@ -8,7 +8,7 @@
       {{ serverStatus }}
     </div>
     <md-empty-state
-      v-if="uploadedFiles.length === 0"
+      v-if="files.length === 0"
       md-icon="add_photo_alternate"
       md-label="No Images Loaded"
       md-description="Drag & drop an image file anywhere to load it"
@@ -16,9 +16,19 @@
     </md-empty-state>
     <div class="imageList" v-else>
       <ImageCard
-        v-for="file in uploadedFiles"
-        :key="file"
-        :filename="file"
+        v-for="file in files"
+        :key="file.url"
+        :filename="file.url"
+        :name="file.name"
+        :status="
+          file.error
+            ? 'error'
+            : file.success
+            ? 'success'
+            : file.active
+            ? 'pending'
+            : ''
+        "
       ></ImageCard>
     </div>
     <div class="drag-area">
@@ -26,18 +36,6 @@
         <span id="dropFilesText" class="md-title">Drop files to upload</span>
       </div>
       <div class="upload">
-        <md-list v-if="files.length">
-          <md-list-item v-for="file in files" :key="file.id">
-            <md-icon>image</md-icon>
-            <span class="md-list-item-text"
-              >{{ file.name }} ({{ file.size }} bytes)</span
-            >
-            <div v-if="file.error" class="status -failure"></div>
-            <div v-else-if="file.success" class="status -success"></div>
-            <div v-else-if="file.active" class="status -pending"></div>
-            <span v-else></span>
-          </md-list-item>
-        </md-list>
         <div>
           <MdButton class="md-primary md-raised">
             <!--suppress XmlInvalidId -->

@@ -1,3 +1,4 @@
+let appConfig = require("./app.config");
 import Vue from "vue";
 import ImageCard from "../components/ImageCard";
 
@@ -6,8 +7,7 @@ Vue.component("file-upload", VueUploadComponent);
 
 let data = {
   serverStatus: "Checking...",
-  files: [],
-  uploadedFiles: []
+  files: []
 };
 
 export default {
@@ -21,6 +21,13 @@ export default {
   watch: {
     // every time files to upload list changes
     files: function() {
+      this.files.forEach(file => {
+        if (file.success)
+          file.url =
+            appConfig.PYTHON_SERVER_URL +
+            appConfig.GET_IMAGE_SERVICE +
+            file.name;
+      });
       // force click on the hidden upload button
       this.$refs.uploadButton.click();
     }
@@ -28,7 +35,7 @@ export default {
 };
 
 // check status of python server
-fetch("http://localhost:8000/test")
+fetch(appConfig.PYTHON_SERVER_URL + appConfig.SERVER_STATUS_SERVICE)
   .then(response => {
     if (response.ok) {
       data.serverStatus = "OK";
@@ -40,10 +47,19 @@ fetch("http://localhost:8000/test")
     data.serverStatus = "FAIL";
   });
 
-fetch("http://localhost:8000/get_filelist").then(response => {
-  if (response.ok) {
-    response.json().then(json => {
-      data.uploadedFiles = json.file_list;
-    });
+fetch(appConfig.PYTHON_SERVER_URL + appConfig.GET_IMAGE_LIST_SERVICE).then(
+  response => {
+    if (response.ok) {
+      response.json().then(json => {
+        json["file_list"].forEach(image => {
+          data.files.push({
+            url:
+              appConfig.PYTHON_SERVER_URL + appConfig.GET_IMAGE_SERVICE + image,
+            name: image,
+            uploaded: true
+          });
+        });
+      });
+    }
   }
-});
+);

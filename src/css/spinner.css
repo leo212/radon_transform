@@ -39,17 +39,17 @@ body {
     position: absolute;
     transition: all 500ms;
 }
-.status.-pending {
+.status.pending {
     color: #666;
 }
-.status.-pending:before, .status.-pending:after {
+.status.pending:before, .status.pending:after {
     background: #888;
     animation-name: spin;
     animation-duration: 1000ms;
     animation-iteration-count: infinite;
     animation-timing-function: linear;
 }
-.status.-pending:before {
+.status.pending:before {
     width: .25em;
     height: .25em;
     top: .5em;
@@ -57,7 +57,7 @@ body {
     border-radius: .125em;
     transform-origin: 50% .5em;
 }
-.status.-pending:after {
+.status.pending:after {
     width: .25em;
     height: .25em;
     top: 1.25em;
@@ -65,14 +65,14 @@ body {
     border-radius: .125em;
     transform-origin: 50% -.25em;
 }
-.status.-success {
+.status.success {
     color: #368;
 }
-.status.-success:before, .status.-success:after {
+.status.success:before, .status.success:after {
     background: #6cf;
     border-radius: .125em;
 }
-.status.-success:before {
+.status.success:before {
     width: .25em;
     height: 1em;
     top: .5em;
@@ -80,7 +80,7 @@ body {
     transform-origin: 50% .875em;
     transform: translate(-.177em, -.11em) rotate(.125turn);
 }
-.status.-success:after {
+.status.success:after {
     width: .25em;
     height: .5em;
     top: 1em;
@@ -88,21 +88,21 @@ body {
     transform-origin: 50% .375em;
     transform: translate(-.177em, -.11em) rotate(-.125turn);
 }
-.status.-failure {
+.status.failure {
     color: #802;
 }
-.status.-failure:before, .status.-failure:after {
+.status.failure:before, .status.failure:after {
     background: #f04;
     border-radius: .125em;
 }
-.status.-failure:before {
+.status.failure:before {
     width: .25em;
     height: 1em;
     top: .5em;
     left: .875em;
     transform: rotate(.125turn);
 }
-.status.-failure:after {
+.status.failure:after {
     width: .25em;
     height: 1em;
     top: .5em;
