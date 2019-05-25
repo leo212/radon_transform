@@ -72,6 +72,9 @@
 
 <script>
 let appConfig = require("../js/app.config");
+let appGlobal = require("../js/app.global");
+appGlobal.loadCss("static/css/home.css");
+
 import Vue from "vue";
 import ImageCard from "../components/ImageCard";
 
@@ -142,6 +145,3 @@ fetch(appConfig.PYTHON_SERVER_URL + appConfig.GET_IMAGE_LIST_SERVICE).then(
   }
 );
 </script>
-<style lang="scss" scoped>
-@import "../css/home.css";
-</style>
