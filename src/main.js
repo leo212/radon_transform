@@ -29,6 +29,7 @@ Vue.use(MdEmptyState);
 Vue.use(MdList);
 Vue.config.productionTip = false;
 
+// noinspection JSUnusedGlobalSymbols
 new Vue({
   render: h => h(App)
 }).$mount("#app");

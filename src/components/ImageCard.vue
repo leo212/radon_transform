@@ -1,24 +1,21 @@
 <template>
-  <md-card>
+  <md-card class="md-card">
     <md-card-media>
       <md-ripple>
         <img v-if="filename" :src="filename" :alt="name" />
       </md-ripple>
     </md-card-media>
 
-    <md-card-header>
+    <md-card-header class="md-card-header">
       <span class="md-title">{{ name }}</span>
       <span class="md-subhead"></span>
     </md-card-header>
 
-    <md-card-actions>
+    <md-card-actions md-alignment="space-between" class="md-card-actions">
       <div :class="[statusClass, status]"></div>
-      <md-button class="md-icon-button">
-        <md-icon md-label="Transform">blur_linear</md-icon>
-      </md-button>
-      <md-button class="md-icon-button">
-        <md-icon md-label="Reconstruct">filter_b_and_w</md-icon>
-      </md-button>
+      <md-button class="md-primary" @click="onTransformClick()"
+        >Transform</md-button
+      >
     </md-card-actions>
   </md-card>
 </template>
@@ -31,10 +28,16 @@ export default {
       statusClass: "status"
     };
   },
-  props: ["filename", "name", "status"]
+  props: ["filename", "name", "status"],
+  methods: {
+    onTransformClick: function() {
+      this.$emit("transformImage");
+    }
+  }
 };
 </script>
 
+// noinspection CSSUnusedGlobalSymbols
 <style scoped>
 .md-card {
   width: 160px;
