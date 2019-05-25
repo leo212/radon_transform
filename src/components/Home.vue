@@ -2,9 +2,9 @@
   <div>
     <div>
       Python Server Status:
-      <span v-if="serverStatus === 'OK'" class="status -success"></span>
-      <span v-else-if="serverStatus === 'FAIL'" class="status -failure"></span>
-      <span v-else class="status -pending"></span>
+      <span v-if="serverStatus === 'OK'" class="status success"></span>
+      <span v-else-if="serverStatus === 'FAIL'" class="status failure"></span>
+      <span v-else class="status pending"></span>
       {{ serverStatus }}
     </div>
     <md-empty-state

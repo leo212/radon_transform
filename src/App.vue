@@ -10,13 +10,16 @@
         :key="image.url"
         :id="image.url"
         md-icon="image"
-      ></md-tab>
+      >
+        <Transform :filename="image.url" :name="image.name"></Transform>
+      </md-tab>
     </md-tabs>
   </div>
 </template>
 
 <script>
 import Home from "./components/Home";
+import Transform from "./components/Transform";
 
 let openedTabs = {};
 let images = [];
@@ -38,6 +41,7 @@ export default {
     }
   },
   components: {
+    Transform,
     Home
   }
 };
