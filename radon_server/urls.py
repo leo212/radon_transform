@@ -26,7 +26,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('test/', files.get_status, name='get_status'),
     path('get_filelist/', files.get_filelist, name='get_filelist'),
-    path('transform/', transform.index, name='index'),
+    path('transform/<str:filename>', transform.transform, name='transform'),
+    path('get_job_status/<int:job_id>', transform.get_job_status, name='get_job_status'),
     path('upload/', csrf_exempt(upload.upload_file), name='upload'),
-    path('get_image/<str:filename>', serve.get_image)
+    path('get_image/<str:filename>', serve.get_image),
+    path('get_result/<str:filename>', serve.get_result)
 ]
