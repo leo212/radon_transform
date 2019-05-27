@@ -15,12 +15,6 @@
       <div class="sourceHolder">
         <img ref="sourceImage" class="source" :src="filename" :alt="name" />
       </div>
-      <md-button
-        class="md-icon-button md-raised md-primary"
-        @click="runTransform()"
-      >
-        <md-icon>navigate_next</md-icon>
-      </md-button>
       <div v-if="progress > 0" class="targetHolder">
         <img
           class="target"
@@ -34,10 +28,15 @@
         v-bind:style="{ width: imageWidth + 'px', height: imageHeight + 'px' }"
       ></div>
     </div>
-    <md-progress-bar
-      md-mode="determinate"
-      :md-value="progress"
-    ></md-progress-bar>
+    <b-progress
+      class="progress"
+      height="12px"
+      :value="progress"
+      animated
+    ></b-progress>
+    <md-button class="md-raised md-primary" @click="runTransform()"
+      >Transform</md-button
+    >
     <md-button class="md-raised md-accent">Close</md-button>
   </div>
 </template>
@@ -121,10 +120,12 @@ export default {
 }
 .sourceHolder {
   flex: 1;
+  padding: 8px;
 }
 
 .targetHolder {
   flex: 1;
+  padding: 8px;
 }
 
 .source {
@@ -140,5 +141,8 @@ export default {
 .target {
   width: 100%;
   height: auto;
+}
+
+.progress {
 }
 </style>
