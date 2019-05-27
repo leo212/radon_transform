@@ -9,7 +9,7 @@ class GetDSSRadonThread(Thread):
     def discrete_slant_stacking(self, image, n):
         M = int(np.shape(image)[0])
         N = int(np.shape(image)[1])
-        radon = np.zeros((n, n), dtype='float64')
+        self.radon = np.zeros((n, n), dtype='float64')
 
         # min_r = -math.sqrt(2*math.pow(n/2,2))
         # max_r = math.sqrt(2*math.pow(n/2,2))
@@ -46,7 +46,7 @@ class GetDSSRadonThread(Thread):
                 y1 = y1[np.where(y2 < N)]
                 y2 = y2[np.where(y2 < N)]
 
-                radon[h, k] = (image[x, y1] * w1).sum() + (image[x, y2] * w2).sum()
+                self.radon[h, k] = (image[x, y1] * w1).sum() + (image[x, y2] * w2).sum()
 
                 # slower implementation
                 # sum = 0
@@ -95,7 +95,7 @@ class GetDSSRadonThread(Thread):
                 x1 = x1[np.where(x2 < N)]
                 x2 = x2[np.where(x2 < N)]
 
-                radon[h, int(n / 2 + k)] = (image[x1, y] * w1).sum() + (image[x2, y] * w2).sum()
+                self.radon[h, int(n / 2 + k)] = (image[x1, y] * w1).sum() + (image[x2, y] * w2).sum()
 
                 # slower implementation
                 # sum = 0
@@ -114,8 +114,7 @@ class GetDSSRadonThread(Thread):
 
             self.progress = h * 100 / n
             self.took = (time.time() - self.startTime)*1000
-            misc.imsave(self.target_file, radon)
-        return radon
+        return self.radon
 
     # cartesian coordinates
     def discrete_slant_stacking_cart(self, image, steps):
@@ -156,8 +155,12 @@ class GetDSSRadonThread(Thread):
         self.progress = 0
         self.took = 0
         self.startTime = time.time()
+        self.radon = None
 
         super(GetDSSRadonThread, self).__init__()
+
+    def save(self):
+        misc.imsave(self.target_file, self.radon)
 
     def run(self):
         print("DSS start for " + self.source_file)

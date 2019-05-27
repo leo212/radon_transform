@@ -36,6 +36,9 @@ def get_job_status(request, job_id):
         response['took'] = thread.took
         response['targetFile'] = thread.target_file
 
+        # save current result into file
+        thread.save()
+
         # return status response
         return JsonResponse(response)
     else:
