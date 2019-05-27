@@ -32,7 +32,8 @@
       class="progress"
       height="12px"
       :value="progress"
-      animated
+      :animated="animate"
+      striped
     ></b-progress>
     <md-button class="md-raised md-primary" @click="runTransform()"
       >Transform</md-button
@@ -53,7 +54,8 @@ export default {
       imageHeight: 0,
       selectedAlgorithm: "dss",
       progress: 0,
-      targetFilename: ""
+      targetFilename: "",
+      animate: false
     };
   },
   props: ["filename", "name"],
@@ -71,6 +73,8 @@ export default {
         appConfig.PYTHON_SERVER_URL +
         appConfig.GET_IMAGE_RESULT_SERVICE +
         this.$props.name;
+
+      data.animate = true;
 
       // run radon transform service on server
       fetch(
@@ -94,6 +98,7 @@ export default {
                     // if the process hasn't ended it, check it again within 500ms
                     if (data.progress < 100)
                       setTimeout(checkJobStatusFunc, 200);
+                    else data.animate = false;
                   });
                 }
               });
