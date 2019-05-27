@@ -15,11 +15,18 @@
       <div class="sourceHolder">
         <img ref="sourceImage" class="source" :src="filename" :alt="name" />
       </div>
-      <md-button class="md-icon-button md-raised md-primary">
+      <md-button
+        class="md-icon-button md-raised md-primary"
+        @click="runTransform()"
+      >
         <md-icon>navigate_next</md-icon>
       </md-button>
-      <div v-if="result !== ''" class="targetHolder">
-        <img class="target" :src="result" :alt="resultName" />
+      <div v-if="progress > 0" class="targetHolder">
+        <img
+          class="target"
+          :src="targetFilename + '?p=' + progress"
+          :alt="name"
+        />
       </div>
       <div
         v-else
@@ -36,22 +43,67 @@
 </template>
 
 <script>
+let appConfig = require("../js/app.config");
+let requestId = 0;
+
 export default {
   name: "Transform",
   data: () => {
     return {
-      result: "",
-      resultName: "",
       imageWidth: 0,
       imageHeight: 0,
       selectedAlgorithm: "dss",
-      progress: 0
+      progress: 0,
+      targetFilename: ""
     };
   },
   props: ["filename", "name"],
   mounted: function() {
     this.$data.imageWidth = this.$refs.sourceImage.width;
     this.$data.imageHeight = this.$refs.sourceImage.height;
+  },
+
+  methods: {
+    runTransform() {
+      let data = this.$data;
+
+      // set target filename
+      data.targetFilename =
+        appConfig.PYTHON_SERVER_URL +
+        appConfig.GET_IMAGE_RESULT_SERVICE +
+        this.$props.name;
+
+      // run radon transform service on server
+      fetch(
+        appConfig.PYTHON_SERVER_URL +
+          appConfig.TRANSFORM_SERVICE +
+          this.$props.name
+      ).then(response => {
+        if (response.ok) {
+          response.json().then(json => {
+            requestId = json.requestId;
+            // start an interval to check the job status until it will be completed
+            let checkJobStatusFunc = function() {
+              fetch(
+                appConfig.PYTHON_SERVER_URL +
+                  appConfig.GET_STATUS_SERVICE +
+                  requestId
+              ).then(response => {
+                if (response.ok) {
+                  response.json().then(json => {
+                    data.progress = json.progress;
+                    // if the process hasn't ended it, check it again within 500ms
+                    if (data.progress < 100)
+                      setTimeout(checkJobStatusFunc, 200);
+                  });
+                }
+              });
+            };
+            setTimeout(checkJobStatusFunc, 200);
+          });
+        }
+      });
+    }
   }
 };
 </script>
