@@ -7,11 +7,15 @@
       <md-tab
         v-for="image in images"
         :md-label="image.name"
-        :key="image.url"
-        :id="image.url"
+        :key="image.name"
+        :id="image.name"
         md-icon="image"
       >
-        <Transform :filename="image.url" :name="image.name"></Transform>
+        <Transform
+          :filename="image.url"
+          :name="image.name"
+          v-on:closeTab="closeTab"
+        ></Transform>
       </md-tab>
     </md-tabs>
   </div>
@@ -22,22 +26,28 @@ import Home from "./components/Home";
 import Transform from "./components/Transform";
 
 let openedTabs = {};
-let images = [];
 
 export default {
   data: () => {
     return {
-      images: images,
+      images: [],
       activeTab: "tab-home"
     };
   },
   methods: {
     transform(file) {
-      if (!openedTabs[file.url]) {
-        openedTabs[file.url] = true;
-        images.push(file);
+      if (!openedTabs[file.name]) {
+        openedTabs[file.name] = true;
+        this.$data.images.push(file);
       }
-      this.$data["activeTab"] = file.url;
+      this.$data["activeTab"] = file.name;
+    },
+    closeTab(key) {
+      this.$data.activeTab = "tab-home";
+      this.$data.images = this.$data["images"].filter(
+        image => image.name !== key
+      );
+      delete openedTabs[key];
     }
   },
   components: {

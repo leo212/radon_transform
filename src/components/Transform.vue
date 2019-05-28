@@ -15,30 +15,36 @@
       <div class="sourceHolder">
         <img ref="sourceImage" class="source" :src="filename" :alt="name" />
       </div>
-      <div v-if="progress > 0" class="targetHolder">
-        <img
-          class="target"
-          :src="targetFilename + '?p=' + progress"
-          :alt="name"
+      <div class="targetHolder">
+        <div v-if="started" class="target">
+          <img
+            class="target"
+            :src="targetFilename + '?p=' + progress"
+            :alt="name"
+          />
+          <md-progress-bar
+            md-mode="determinate"
+            :md-value="progress"
+          ></md-progress-bar>
+        </div>
+        <md-empty-state
+          v-else
+          class="beforeTransform"
+          md-icon="assistant"
+          md-label="Transform hasn't started yet"
+          md-description="Choose an algorithm and click 'Transform' to start performing radon transform"
         />
       </div>
-      <div
-        v-else
-        class="emptyImage"
-        v-bind:style="{ width: imageWidth + 'px', height: imageHeight + 'px' }"
-      ></div>
     </div>
-    <b-progress
-      class="progress"
-      height="12px"
-      :value="progress"
-      :animated="animate"
-      striped
-    ></b-progress>
-    <md-button class="md-raised md-primary" @click="runTransform()"
+    <md-button
+      class="md-raised md-primary"
+      :disabled="animate"
+      @click="runTransform()"
       >Transform</md-button
     >
-    <md-button class="md-raised md-accent">Close</md-button>
+    <md-button class="md-raised md-accent" @click="closeTransform()"
+      >Close</md-button
+    >
   </div>
 </template>
 
@@ -54,6 +60,7 @@ export default {
       imageHeight: 0,
       selectedAlgorithm: "dss",
       progress: 0,
+      started: false,
       targetFilename: "",
       animate: false
     };
@@ -75,6 +82,7 @@ export default {
         this.$props.name;
 
       data.animate = true;
+      data.started = true;
 
       // run radon transform service on server
       fetch(
@@ -107,6 +115,9 @@ export default {
           });
         }
       });
+    },
+    closeTransform() {
+      this.$emit("closeTab", this.$props.name);
     }
   }
 };
@@ -124,18 +135,23 @@ export default {
   flex-direction: row;
 }
 .sourceHolder {
+  display: flex;
+  justify-content: center;
   flex: 1;
   padding: 8px;
 }
 
 .targetHolder {
+  display: flex;
+  justify-content: center;
   flex: 1;
   padding: 8px;
 }
 
 .source {
+  max-width: 512px;
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
 .emptyImage {
@@ -144,8 +160,13 @@ export default {
 }
 
 .target {
+  max-width: 512px;
   width: 100%;
-  height: auto;
+  height: 100%;
+}
+
+.beforeTransform {
+  transition: none;
 }
 
 .progress {
