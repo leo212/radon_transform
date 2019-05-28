@@ -5,13 +5,17 @@ jobId = 0
 threadMap = {}
 
 
-def transform(request, filename):
+def transform(request, algorithm, filename):
     global jobId
     jobId += 1
     request_obj = {"requestId": jobId}
     response = JsonResponse(request_obj)
-    thread = radon_dss.GetDSSRadonThread("radon_server/static/uploaded/" + filename,
-                                         "radon_server/static/result/" + filename)
+    if algorithm == "dss":
+        thread = radon_dss.GetDSSRadonThread("radon_server/static/uploaded/" + filename,
+                                             "radon_server/static/result/" + filename)
+    else:
+        return JsonResponse({"error": "Unsupported Algorithm"})
+
     thread.start()
     threadMap[jobId] = thread
 

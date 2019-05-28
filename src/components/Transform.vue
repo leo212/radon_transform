@@ -45,6 +45,18 @@
     <md-button class="md-raised md-accent" @click="closeTransform()"
       >Close</md-button
     >
+    <md-snackbar :md-active.sync="showSnackbar" md-persistent>
+      <span>{{ error }}</span>
+      <md-button
+        class="md-primary"
+        @click="
+          showSnackbar = false;
+          runTransform();
+        "
+        >Retry</md-button
+      >
+    </md-snackbar>
+    <div></div>
   </div>
 </template>
 
@@ -62,7 +74,9 @@ export default {
       progress: 0,
       started: false,
       targetFilename: "",
-      animate: false
+      animate: false,
+      error: "",
+      showSnackbar: false
     };
   },
   props: ["filename", "name"],
@@ -88,30 +102,39 @@ export default {
       fetch(
         appConfig.PYTHON_SERVER_URL +
           appConfig.TRANSFORM_SERVICE +
+          this.$data.selectedAlgorithm +
+          "/" +
           this.$props.name
       ).then(response => {
         if (response.ok) {
           response.json().then(json => {
-            requestId = json.requestId;
-            // start an interval to check the job status until it will be completed
-            let checkJobStatusFunc = function() {
-              fetch(
-                appConfig.PYTHON_SERVER_URL +
-                  appConfig.GET_STATUS_SERVICE +
-                  requestId
-              ).then(response => {
-                if (response.ok) {
-                  response.json().then(json => {
-                    data.progress = json.progress;
-                    // if the process hasn't ended it, check it again within 500ms
-                    if (data.progress < 100)
-                      setTimeout(checkJobStatusFunc, 200);
-                    else data.animate = false;
-                  });
-                }
-              });
-            };
-            setTimeout(checkJobStatusFunc, 200);
+            if (!json.error) {
+              requestId = json.requestId;
+              // start an interval to check the job status until it will be completed
+              let checkJobStatusFunc = function() {
+                fetch(
+                  appConfig.PYTHON_SERVER_URL +
+                    appConfig.GET_STATUS_SERVICE +
+                    requestId
+                ).then(response => {
+                  if (response.ok) {
+                    response.json().then(json => {
+                      data.progress = json.progress;
+                      // if the process hasn't ended it, check it again within 500ms
+                      if (data.progress < 100)
+                        setTimeout(checkJobStatusFunc, 200);
+                      else data.animate = false;
+                    });
+                  }
+                });
+              };
+              setTimeout(checkJobStatusFunc, 200);
+            } else {
+              data.started = false;
+              data.animate = false;
+              data.error = "Server Error: " + json.error;
+              data.showSnackbar = true;
+            }
           });
         }
       });
