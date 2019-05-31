@@ -1,8 +1,7 @@
 import math
-import time
 import numpy as np
-from scipy import misc
-from threading import Thread
+
+from radon_server.radon_thread import RadonTransformThread
 
 
 class DSSRadon(RadonTransformThread):
@@ -112,8 +111,7 @@ class DSSRadon(RadonTransformThread):
                 #             sum = sum + image[x1+N/2, y+M/2]*w2
                 # radon[h,n/2+k] = sum
 
-            self.progress = h * 100 / n
-            self.took = (time.time() - self.startTime)*1000
+            self.update_progress(h, n)
         return self.radon
 
     # UNUSED - dss using cartesian coordinates
