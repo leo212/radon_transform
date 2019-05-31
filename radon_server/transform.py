@@ -1,27 +1,38 @@
 from django.http import JsonResponse
 from . import radon_dss
+from . import radon_pbim
+from . import radon_shas
 
 jobId = 0
 threadMap = {}
 
 
+# noinspection PyUnusedLocal
 def transform(request, algorithm, filename):
     global jobId
     jobId += 1
     request_obj = {"requestId": jobId}
-    response = JsonResponse(request_obj)
+    target_filename = filename[:-3] + algorithm + "." + filename[-3:]
+    source = "radon_server/static/uploaded/" + filename
+    target = "radon_server/static/result/" + target_filename
+    request_obj["target"] = target_filename
+
     if algorithm == "dss":
-        thread = radon_dss.GetDSSRadonThread("radon_server/static/uploaded/" + filename,
-                                             "radon_server/static/result/" + filename)
+        thread = radon_dss.DSSRadon(source, target)
+    elif algorithm == "pbim":
+        thread = radon_pbim.PBIMTransform(source, target)
+    elif algorithm == "shas":
+        thread = radon_shas.SHASTransform(source, target)
     else:
         return JsonResponse({"error": "Unsupported Algorithm"})
 
     thread.start()
     threadMap[jobId] = thread
 
-    return response
+    return JsonResponse(request_obj)
 
 
+# noinspection PyUnusedLocal
 def get_job_status(request, job_id):
     response = {}
 

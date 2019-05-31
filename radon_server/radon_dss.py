@@ -5,14 +5,14 @@ from scipy import misc
 from threading import Thread
 
 
-class GetDSSRadonThread(Thread):
-    def discrete_slant_stacking(self, image, n):
+class DSSRadon(RadonTransformThread):
+    def get_algorithm_name(self):
+        return "dss"
+
+    def run_algorithm(self, image, n):
         M = int(np.shape(image)[0])
         N = int(np.shape(image)[1])
         self.radon = np.zeros((n, n), dtype='float64')
-
-        # min_r = -math.sqrt(2*math.pow(n/2,2))
-        # max_r = math.sqrt(2*math.pow(n/2,2))
 
         for h in range(0, n):
             # calculate radon for horizontal lines
@@ -48,7 +48,7 @@ class GetDSSRadonThread(Thread):
 
                 self.radon[h, k] = (image[x, y1] * w1).sum() + (image[x, y2] * w2).sum()
 
-                # slower implementation
+                # slower but more clear implementation
                 # sum = 0
                 # for x in range(-M/2, M/2):
                 #     y = ((r - x*math.cos(theta))/math.sin(theta))
@@ -116,7 +116,7 @@ class GetDSSRadonThread(Thread):
             self.took = (time.time() - self.startTime)*1000
         return self.radon
 
-    # cartesian coordinates
+    # UNUSED - dss using cartesian coordinates
     def discrete_slant_stacking_cart(self, image, steps):
         H = steps
         K = steps
@@ -135,8 +135,6 @@ class GetDSSRadonThread(Thread):
         M = np.shape(image)[0]
         N = np.shape(image)[1]
 
-        radon = np.zeros((H, K), dtype='float64')
-
         for k in range(0, K):
             for h in range(0, H):
                 alpha = p[k] * dx / dy
@@ -146,32 +144,4 @@ class GetDSSRadonThread(Thread):
                     n = int(round(alpha * m + beta))
                     if (n >= 0 and n < N):
                         sum = sum + image[n, m]
-                radon[H - h - 1, K - k - 1] = sum
-        return radon
-
-    def __init__(self, source_file, target_file):
-        self.source_file = source_file
-        self.target_file = target_file
-        self.progress = 0
-        self.took = 0
-        self.startTime = time.time()
-        self.radon = None
-
-        super(GetDSSRadonThread, self).__init__()
-
-    def save(self):
-        misc.imsave(self.target_file, self.radon)
-
-    def run(self):
-        print("DSS start for " + self.source_file)
-        image = misc.imread(self.source_file, flatten=True).astype('float64')
-        n = int(np.shape(image)[0])
-
-        self.startTime = time.time()
-        radon1image = self.discrete_slant_stacking(image, n)
-        duration = time.time() - self.startTime
-        print("DSS took:" + str(duration * 1000) + "ms")
-        self.took = duration*1000
-        self.progress = 100
-
-        misc.imsave(self.target_file, radon1image)
+                self.radon[H - h - 1, K - k - 1] = sum
