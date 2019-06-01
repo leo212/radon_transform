@@ -32,10 +32,10 @@ class SHASTransform(RadonTransformThread):
             self.update_progress(s, n*2)
 
         # vertical lines
-        for s in range(n, 2*n):
-            factors = factors_table[s - n]
+        for s in range(n):
+            factors = factors_table[n - s - 1]
             skewed = self.skewby(image, factors, False).astype('float64')
-            self.radon[:, 2 * n - s + n - 1] = sum(np.transpose(skewed))
+            self.radon[:, n + s] = sum(np.transpose(skewed))
             self.update_progress(s, n*2)
 
     def shas_cv2(self, image, n):
