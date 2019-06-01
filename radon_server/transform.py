@@ -2,6 +2,9 @@ from django.http import JsonResponse
 from . import radon_dss
 from . import radon_pbim
 from . import radon_shas
+from . import radon_twoscale
+from . import radon_sss
+from . import radon_fss
 
 jobId = 0
 threadMap = {}
@@ -23,6 +26,12 @@ def transform(request, algorithm, filename):
         thread = radon_pbim.PBIMTransform(source, target)
     elif algorithm == "shas":
         thread = radon_shas.SHASTransform(source, target)
+    elif algorithm == "twoscale":
+        thread = radon_twoscale.TwoScaleTransform(source, target)
+    elif algorithm == "sss":
+        thread = radon_sss.SlowSlantStackTransform(source, target)
+    elif algorithm == "fss":
+        thread = radon_fss.FastSlantStackTransform(source, target)
     else:
         return JsonResponse({"error": "Unsupported Algorithm"})
 
