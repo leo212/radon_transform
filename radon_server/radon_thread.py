@@ -10,6 +10,7 @@ class RadonTransformThread(Thread):
         self.target_file = target_file
         self.progress = 0
         self.took = 0
+        self.norm = 0
         self.startTime = time.time()
         self.radon = None
 
@@ -30,6 +31,7 @@ class RadonTransformThread(Thread):
 
     def save(self):
         misc.imsave(self.target_file, self.radon)
+        self.norm = np.linalg.norm(self.radon)
 
     def update_progress(self, step, total_steps):
         self.progress = step * 100 / total_steps
@@ -44,4 +46,5 @@ class RadonTransformThread(Thread):
         self.start_algorithm(image, n)
         print(self.get_algorithm_name() + " took:" + str(self.took) + "ms")
         self.progress = 100
+        self.norm = np.linalg.norm(self.radon)
         self.save()

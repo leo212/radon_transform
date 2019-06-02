@@ -59,6 +59,7 @@ def get_job_status(request, job_id):
         response['progress'] = thread.progress
         response['took'] = thread.took
         response['targetFile'] = thread.target_file
+        response['norm'] = thread.norm
 
         # save current result into file
         thread.save()
