@@ -264,13 +264,20 @@ class TwoScaleTransform(RadonTransformThread):
                 r4 = float(r) - (n / 4) * math.cos(phi) - (n / 4) * math.sin(phi)
                 r4_ind = ((r4 - min_r_q) / (max_r_q - min_r_q)) * (n / 2 - 1)
 
-                radon[j, i] += (get_factorized_value(radon1, r1_ind, phi_ind, n / 2) +
-                                get_factorized_value(radon2, r2_ind, phi_ind, n / 2) +
-                                get_factorized_value(radon3, r3_ind, phi_ind, n / 2) +
-                                get_factorized_value(radon4, r4_ind, phi_ind, n / 2))
+                radon[j, i] += (self.get_factorized_value(radon1, r1_ind, phi_ind, n / 2) +
+                                self.get_factorized_value(radon2, r2_ind, phi_ind, n / 2) +
+                                self.get_factorized_value(radon3, r3_ind, phi_ind, n / 2) +
+                                self.get_factorized_value(radon4, r4_ind, phi_ind, n / 2))
 
     # non recursive run (bottom-up)
     def run_two_scale_radon(self, image, n):
+        # make the image a multiply of 2 size
+        f = math.ceil(math.log(n, 2))
+        new_n = int(math.pow(2, f))
+        image = np.pad(image, (new_n - n)//2, 'constant')
+        n = new_n
+        self.radon = np.zeros((n, n), dtype='float64')
+
         # load radon 4x4 calculation matrix
         A = sparse.load_npz("radon_server/npz/direct_radon4x4.npz")
 
@@ -298,10 +305,10 @@ class TwoScaleTransform(RadonTransformThread):
             size = size * 2
             for x in np.arange(0, n, size):
                 for y in np.arange(0, n, size):
-                    radon1 = self.radon[x:x + size//2, y:y + size//2]
-                    radon2 = self.radon[x:x + size//2, y + size//2:y+size]
-                    radon3 = self.radon[x + size//2:x + size, y:y + size//2]
-                    radon4 = self.radon[x + size//2:x + size, y + size//2:y+size]
+                    radon1 = self.radon[x:x + size // 2, y:y + size // 2]
+                    radon2 = self.radon[x:x + size // 2, y + size // 2:y + size]
+                    radon3 = self.radon[x + size // 2:x + size, y:y + size // 2]
+                    radon4 = self.radon[x + size // 2:x + size, y + size // 2:y + size]
                     r = self.merge_radon_squares(radon1, radon2, radon3, radon4, size)
                     self.radon[x:x + size, y:y + size] = r
                     self.update_progress(step, steps)
