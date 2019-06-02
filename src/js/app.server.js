@@ -48,7 +48,7 @@ module.exports = {
             fetch(this.PYTHON_SERVER_URL + this.GET_STATUS_SERVICE + requestId).then(response => {
                 if (response.ok) {
                     response.json().then(json => {
-                        resolve(json.progress);
+                        resolve(json);
                     });
                 }
             });

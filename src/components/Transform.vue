@@ -1,19 +1,24 @@
 <template>
     <div class="transformLayout">
-        <md-field>
-            <label for="algorithm">Radon Algorithm</label>
-            <md-select v-model="selectedAlgorithm" name="algorithm" id="algorithm">
-                <md-option value="dss">Direct Slant Stack</md-option>
-                <md-option value="pbim">Parallel Beams Image Rotation</md-option>
-                <md-option value="shas">Shift and Sum</md-option>
-                <md-option value="twoscale">Two-Scale Recursion</md-option>
-                <md-option value="sss">Slow Slant Stack</md-option>
-                <md-option value="fss">Fast Slant Stack</md-option>
-            </md-select>
-        </md-field>
+        <div class="transformDiv">
+            <md-field>
+                <label for="algorithm">Radon Algorithm</label>
+                <md-select v-model="selectedAlgorithm" name="algorithm" id="algorithm">
+                    <md-option value="dss">Direct Slant Stack</md-option>
+                    <md-option value="pbim">Parallel Beams Image Rotation</md-option>
+                    <md-option value="shas">Shift and Sum</md-option>
+                    <md-option value="twoscale">Two-Scale Recursion</md-option>
+                    <md-option value="sss">Slow Slant Stack</md-option>
+                    <md-option value="fss">Fast Slant Stack</md-option>
+                </md-select>
+            </md-field>
+            <md-button class="transformButton md-raised md-primary" :disabled="animate" @click="runTransform()"
+                >Transform</md-button
+            >
+        </div>
         <div class="transformPics">
             <div class="sourceHolder">
-                <img ref="sourceImage" class="source" :src="filename" :alt="name" />
+                <img ref="sourceImage" class="source" :src="filename" :alt="name" @load="imageLoaded" />
             </div>
             <div class="targetHolder">
                 <div v-if="started" class="target">
@@ -28,8 +33,41 @@
                     md-description="Choose an algorithm and click 'Transform' to start performing radon transform"
                 />
             </div>
+            <div class="transformInfo">
+                <md-toolbar :md-elevation="1">
+                    <span class="md-title">Information</span>
+                </md-toolbar>
+
+                <md-list class="md-double-line">
+                    <md-subheader>Filename: {{ name }}</md-subheader>
+                    <md-subheader>Image Dimensions: {{ width }} x {{ height }}</md-subheader>
+
+                    <md-divider></md-divider>
+                    <md-subheader>Transform information:</md-subheader>
+
+                    <md-list-item>
+                        <div class="md-list-item-text">
+                            <span>Time elapsed: </span>
+                            <span>{{ minutesElapsed }}:{{ secondsElapsed }}.{{ millisecondsElapsed }}</span>
+                        </div>
+                        <div class="md-list-item-text">
+                            <span>Time remaining: </span>
+                            <span>{{ minutesRemaining }}:{{ secondsRemaining }}.{{ millisecondsRemaining }}</span>
+                        </div>
+                    </md-list-item>
+
+                    <md-list-item>
+                        <div class="md-list-item-text">
+                            <span
+                                >Radon Norm:
+                                <md-tooltip>Higher value means it will be harder to reconstruct</md-tooltip></span
+                            >
+                            <span>{{ norm }}</span>
+                        </div>
+                    </md-list-item>
+                </md-list>
+            </div>
         </div>
-        <md-button class="md-raised md-primary" :disabled="animate" @click="runTransform()">Transform</md-button>
         <md-button class="md-raised md-accent" @click="closeTransform()">Close</md-button>
         <md-snackbar :md-active.sync="showSnackbar" md-persistent>
             <span>{{ error }}</span>
@@ -54,6 +92,8 @@ export default {
     name: "Transform",
     data: () => {
         return {
+            width: 0,
+            height: 0,
             imageWidth: 0,
             imageHeight: 0,
             selectedAlgorithm: "dss",
@@ -62,7 +102,14 @@ export default {
             targetFilename: "",
             animate: false,
             error: "",
-            showSnackbar: false
+            showSnackbar: false,
+            minutesElapsed: "00",
+            secondsElapsed: "00",
+            millisecondsElapsed: "000",
+            minutesRemaining: "00",
+            secondsRemaining: "00",
+            millisecondsRemaining: "000",
+            norm: 0
         };
     },
     props: ["filename", "name"],
@@ -72,6 +119,10 @@ export default {
     },
 
     methods: {
+        imageLoaded() {
+            this.$data.width = this.$refs.sourceImage.naturalWidth;
+            this.$data.height = this.$refs.sourceImage.naturalHeight;
+        },
         runTransform() {
             let data = this.$data;
 
@@ -80,8 +131,33 @@ export default {
 
             // run radon transform service on server
             let checkStatusFunc = function() {
-                server.checkJobStatus(requestId).then(progress => {
-                    data.progress = progress;
+                server.checkJobStatus(requestId).then(status => {
+                    // update progress and time passed
+                    data.progress = status.progress;
+                    data.minutesElapsed = Math.trunc(status.took / 1000 / 60)
+                        .toString()
+                        .padStart(2, "0");
+                    data.secondsElapsed = Math.trunc((status.took / 1000) % 60)
+                        .toString()
+                        .padStart(2, "0");
+                    data.millisecondsElapsed = Math.trunc(status.took % 1000)
+                        .toString()
+                        .padStart(3, "0");
+
+                    // estimate time remaining
+                    let remaining = (100 / status.progress) * status.took - status.took;
+                    data.minutesRemaining = Math.trunc(remaining / 1000 / 60)
+                        .toString()
+                        .padStart(2, "0");
+                    data.secondsRemaining = Math.trunc((remaining / 1000) % 60)
+                        .toString()
+                        .padStart(2, "0");
+                    data.millisecondsRemaining = Math.trunc(remaining % 1000)
+                        .toString()
+                        .padStart(3, "0");
+
+                    data.norm = status.norm;
+
                     // if the process hasn't ended it, check it again within 500ms
                     if (data.progress < 100) setTimeout(checkStatusFunc, 200);
                     else data.animate = false;
@@ -119,7 +195,6 @@ export default {
 
 .transformPics {
     display: flex;
-    align-items: center;
     flex-direction: row;
 }
 .sourceHolder {
@@ -155,6 +230,25 @@ export default {
 
 .beforeTransform {
     transition: none;
+}
+
+.transformDiv {
+    display: flex;
+    flex-direction: row;
+}
+
+.transformButton {
+    width: 320px;
+}
+
+.transformInfo {
+    width: 320px;
+    max-width: 100%;
+    margin: 8px;
+    display: inline-block;
+    vertical-align: top;
+    overflow: auto;
+    border: 1px solid rgba(#000, 0.12);
 }
 
 .progress {
