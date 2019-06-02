@@ -271,7 +271,7 @@ class TwoScaleTransform(RadonTransformThread):
 
     # non recursive run (bottom-up)
     def run_two_scale_radon(self, image, n):
-        # make the image a multiply of 2 size
+        # make the image an exponent of 2 size
         f = math.ceil(math.log(n, 2))
         new_n = int(math.pow(2, f))
         image = np.pad(image, (new_n - n)//2, 'constant')
