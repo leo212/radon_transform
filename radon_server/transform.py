@@ -11,27 +11,27 @@ threadMap = {}
 
 
 # noinspection PyUnusedLocal
-def transform(request, algorithm, filename):
+def transform(request, algorithm, variant, filename):
     global jobId
     jobId += 1
     request_obj = {"requestId": jobId}
-    target_filename = filename[:-3] + algorithm + "." + filename[-3:]
+    target_filename = filename[:-3] + algorithm + "." + variant + "." + filename[-3:]
     source = "radon_server/static/uploaded/" + filename
     target = "radon_server/static/result/" + target_filename
     request_obj["target"] = target_filename
 
     if algorithm == "dss":
-        thread = radon_dss.DSSRadon(source, target)
+        thread = radon_dss.DSSRadon(source, target, variant)
     elif algorithm == "pbim":
-        thread = radon_pbim.PBIMTransform(source, target)
+        thread = radon_pbim.PBIMTransform(source, target, variant)
     elif algorithm == "shas":
-        thread = radon_shas.SHASTransform(source, target)
+        thread = radon_shas.SHASTransform(source, target, variant)
     elif algorithm == "twoscale":
-        thread = radon_twoscale.TwoScaleTransform(source, target)
+        thread = radon_twoscale.TwoScaleTransform(source, target, variant)
     elif algorithm == "sss":
-        thread = radon_sss.SlowSlantStackTransform(source, target)
+        thread = radon_sss.SlowSlantStackTransform(source, target, variant)
     elif algorithm == "fss":
-        thread = radon_fss.FastSlantStackTransform(source, target)
+        thread = radon_fss.FastSlantStackTransform(source, target, variant)
     else:
         return JsonResponse({"error": "Unsupported Algorithm"})
 
@@ -59,7 +59,7 @@ def get_job_status(request, job_id):
         response['progress'] = thread.progress
         response['took'] = thread.took
         response['targetFile'] = thread.target_file
-        response['norm'] = thread.norm
+        response['cond'] = thread.cond
 
         # save current result into file
         thread.save()

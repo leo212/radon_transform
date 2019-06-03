@@ -8,7 +8,7 @@ class DSSRadon(RadonTransformThread):
     def get_algorithm_name(self):
         return "dss"
 
-    def run_algorithm(self, image, n):
+    def run_algorithm(self, image, n, variant=None):
         M = int(np.shape(image)[0])
         N = int(np.shape(image)[1])
         self.radon = np.zeros((n, n), dtype='float64')

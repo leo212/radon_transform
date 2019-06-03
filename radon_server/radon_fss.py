@@ -7,7 +7,7 @@ class FastSlantStackTransform(RadonTransformThread):
     def get_algorithm_name(self):
         return "fss"
 
-    def run_algorithm(self, image, n):
+    def run_algorithm(self, image, n, variant=None):
         self.fss(image, n)
 
     def ffft(self, x, alpha):

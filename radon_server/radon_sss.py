@@ -7,7 +7,7 @@ class SlowSlantStackTransform(RadonTransformThread):
     def get_algorithm_name(self):
         return "sss"
 
-    def run_algorithm(self, image, n):
+    def run_algorithm(self, image, n, variant=None):
         self.slow_slant_stack(image, n)
 
     def slow_slant_stack(self, image, n):
