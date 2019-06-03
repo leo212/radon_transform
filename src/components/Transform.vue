@@ -3,13 +3,25 @@
         <div class="transformDiv">
             <md-field>
                 <label for="algorithm">Radon Algorithm</label>
-                <md-select v-model="selectedAlgorithm" name="algorithm" id="algorithm">
+                <md-select
+                    v-model="selectedAlgorithm"
+                    name="algorithm"
+                    id="algorithm"
+                    @md-selected="variant = 'default'"
+                >
                     <md-option value="dss">Direct Slant Stack</md-option>
                     <md-option value="pbim">Parallel Beams Image Rotation</md-option>
                     <md-option value="shas">Shift and Sum</md-option>
                     <md-option value="twoscale">Two-Scale Recursion</md-option>
                     <md-option value="sss">Slow Slant Stack</md-option>
                     <md-option value="fss">Fast Slant Stack</md-option>
+                </md-select>
+            </md-field>
+            <md-field v-if="selectedAlgorithm === 'shas'">
+                <label for="variant">Variant</label>
+                <md-select v-model="variant" name="variant" id="variant">
+                    <md-option value="default">Default</md-option>
+                    <md-option v-if="selectedAlgorithm === 'shas'" value="cv2">CV2</md-option>
                 </md-select>
             </md-field>
             <md-button class="transformButton md-raised md-primary" :disabled="animate" @click="runTransform()"
@@ -59,10 +71,10 @@
                     <md-list-item>
                         <div class="md-list-item-text">
                             <span
-                                >Radon Norm:
+                                >Radon Cond:
                                 <md-tooltip>Higher value means it will be harder to reconstruct</md-tooltip></span
                             >
-                            <span>{{ norm }}</span>
+                            <span>{{ cond }}</span>
                         </div>
                     </md-list-item>
                 </md-list>
@@ -97,6 +109,7 @@ export default {
             imageWidth: 0,
             imageHeight: 0,
             selectedAlgorithm: "dss",
+            variant: "default",
             progress: 0,
             started: false,
             targetFilename: "",
@@ -109,7 +122,7 @@ export default {
             minutesRemaining: "00",
             secondsRemaining: "00",
             millisecondsRemaining: "000",
-            norm: 0
+            cond: 0
         };
     },
     props: ["filename", "name"],
@@ -156,7 +169,7 @@ export default {
                         .toString()
                         .padStart(3, "0");
 
-                    data.norm = status.norm;
+                    data.cond = status.cond;
 
                     // if the process hasn't ended it, check it again within 500ms
                     if (data.progress < 100) setTimeout(checkStatusFunc, 200);
@@ -165,7 +178,7 @@ export default {
             };
 
             server
-                .runTransform(this.$data.selectedAlgorithm, this.$props.name)
+                .runTransform(this.$data.selectedAlgorithm, this.$props.name, this.$data.variant)
                 .then(json => {
                     requestId = json.requestId;
                     // set target filename

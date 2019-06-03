@@ -55,19 +55,21 @@ module.exports = {
         });
     },
 
-    runTransform: function(algorithm, filename) {
+    runTransform: function(algorithm, filename, variant) {
         return new Promise((resolve, reject) => {
-            fetch(this.PYTHON_SERVER_URL + this.TRANSFORM_SERVICE + algorithm + "/" + filename).then(response => {
-                if (response.ok) {
-                    response.json().then(json => {
-                        if (!json.error) {
-                            resolve(json);
-                        } else {
-                            reject(json.error);
-                        }
-                    });
+            fetch(this.PYTHON_SERVER_URL + this.TRANSFORM_SERVICE + algorithm + "/" + variant + "/" + filename).then(
+                response => {
+                    if (response.ok) {
+                        response.json().then(json => {
+                            if (!json.error) {
+                                resolve(json);
+                            } else {
+                                reject(json.error);
+                            }
+                        });
+                    }
                 }
-            });
+            );
         });
     },
 
