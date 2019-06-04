@@ -25,7 +25,7 @@ from . import upload
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('test/', files.get_status, name='get_status'),
-    path('get_filelist/', files.get_filelist, name='get_filelist'),
+    path('get_filelist/<str:folder>', files.get_filelist, name='get_filelist'),
     path('transform/<str:algorithm>/<str:variant>/<str:filename>', transform.transform, name='transform'),
     path('get_job_status/<int:job_id>', transform.get_job_status, name='get_job_status'),
     path('upload/', csrf_exempt(upload.upload_file), name='upload'),
