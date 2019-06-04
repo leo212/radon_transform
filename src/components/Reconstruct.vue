@@ -1,32 +1,24 @@
 <template>
     <div class="transformLayout">
         <div class="transformDiv">
-            <md-field>
-                <label for="algorithm">Radon Algorithm</label>
-                <md-select
-                    v-model="selectedAlgorithm"
-                    name="algorithm"
-                    id="algorithm"
-                    @md-selected="variant = 'default'"
-                >
-                    <md-option
-                        v-for="transformType in transformTypes"
-                        :key="transformType.key"
-                        :value="transformType.key"
-                        >{{ transformType.name }}</md-option
-                    >
-                </md-select>
-            </md-field>
-            <md-field v-if="selectedAlgorithm === 'shas'">
-                <label for="variant">Variant</label>
-                <md-select v-model="variant" name="variant" id="variant">
-                    <md-option value="default">Default</md-option>
-                    <md-option v-if="selectedAlgorithm === 'shas'" value="cv2">CV2</md-option>
-                </md-select>
-            </md-field>
-            <md-button class="transformButton md-raised md-primary" :disabled="animate" @click="runTransform()"
-                >Transform</md-button
+            <div class="algorithm-name md-title">
+                Radon Algorithm
+                <div class="md-subheading">{{ getAlgorithmName(algorithm) }}</div>
+            </div>
+            <md-button class="buildMatrixButton md-raised md-primary" :disabled="animate" @click="buildMatrix()"
+                >Build Matrix</md-button
             >
+            <div class="reconstructButton">
+                <md-button
+                    class="reconstructButton md-raised md-primary"
+                    :disabled="animate || !matrixBuilt"
+                    @click="runReconstruct()"
+                    >Reconstruct
+                </md-button>
+                <md-tooltip v-if="!matrixBuilt"
+                    >Radon matrix need to be built for this image size before running construction</md-tooltip
+                >
+            </div>
         </div>
         <div class="transformPics">
             <div class="sourceHolder">
@@ -38,24 +30,33 @@
                     <md-progress-bar md-mode="determinate" :md-value="progress"></md-progress-bar>
                 </div>
                 <md-empty-state
-                    v-else
-                    class="beforeTransform"
+                    v-else-if="!matrixBuilt"
+                    class="beforeReconstruct"
                     md-icon="assistant"
-                    md-label="Transform hasn't started yet"
-                    md-description="Choose an algorithm and click 'Transform' to start performing radon transform"
+                    md-label="Reconstruction Matrix is not Available"
+                    md-description="Click 'Build Matrix' to start building a reconstruction matrix (it should take a while)"
+                />
+                <md-empty-state
+                    v-else
+                    class="beforeReconstruct"
+                    md-icon="assistant"
+                    md-label="Reconstruct hasn't started yet"
+                    md-description="Click 'Reconstruct' to reconstruct the image from the radon transform"
                 />
             </div>
-            <div class="transformInfo">
+            <div class="reconstructInfo">
                 <md-toolbar :md-elevation="1">
                     <span class="md-title">Information</span>
                 </md-toolbar>
 
                 <md-list class="md-double-line">
                     <md-subheader>Filename: {{ name }}</md-subheader>
-                    <md-subheader>Image Dimensions: {{ width }} x {{ height }}</md-subheader>
-
                     <md-divider></md-divider>
-                    <md-subheader>Transform information:</md-subheader>
+                    <md-subheader>Image Dimensions: {{ width }} x {{ height }}</md-subheader>
+                    <md-divider></md-divider>
+                    <md-subheader>Reconstruction Matrix Available: {{ matrixBuilt }}</md-subheader>
+                    <md-divider></md-divider>
+                    <md-subheader>Reconstruct information:</md-subheader>
 
                     <md-list-item>
                         <div class="md-list-item-text">
@@ -80,14 +81,14 @@
                 </md-list>
             </div>
         </div>
-        <md-button class="md-raised md-accent" @click="closeTransform()">Close</md-button>
+        <md-button class="md-raised md-accent" @click="closeReconstruct()">Close</md-button>
         <md-snackbar :md-active.sync="showSnackbar" md-persistent>
             <span>{{ error }}</span>
             <md-button
                 class="md-primary"
                 @click="
                     showSnackbar = false;
-                    runTransform();
+                    runReconstruct();
                 "
                 >Retry</md-button
             >
@@ -101,15 +102,14 @@ import server from "../js/app.server";
 let requestId = 0;
 
 export default {
-    name: "Transform",
+    name: "Reconstruct",
     data: () => {
         return {
+            matrixBuilt: false,
             width: 0,
             height: 0,
             imageWidth: 0,
             imageHeight: 0,
-            selectedAlgorithm: "dss",
-            variant: "default",
             progress: 0,
             started: false,
             targetFilename: "",
@@ -126,7 +126,7 @@ export default {
             transformTypes: server.TRANSFORM_TYPES
         };
     },
-    props: ["filename", "name"],
+    props: ["filename", "name", "algorithm", "variant"],
     mounted: function() {
         this.$data.imageWidth = this.$refs.sourceImage.width;
         this.$data.imageHeight = this.$refs.sourceImage.height;
@@ -137,7 +137,18 @@ export default {
             this.$data.width = this.$refs.sourceImage.naturalWidth;
             this.$data.height = this.$refs.sourceImage.naturalHeight;
         },
-        runTransform() {
+        getAlgorithmName(key) {
+            let algorithm = server.TRANSFORM_TYPES.filter(type => type.key === key);
+            if (algorithm.length > 0) {
+                return algorithm[0].name;
+            } else {
+                return "Unknown";
+            }
+        },
+        buildMatrix() {
+            this.$data.matrixBuilt = true;
+        },
+        runReconstruct() {
             let data = this.$data;
 
             data.animate = true;
@@ -194,7 +205,7 @@ export default {
                     data.showSnackbar = true;
                 });
         },
-        closeTransform() {
+        closeReconstruct() {
             this.$emit("closeTab", this.$props.name);
         }
     }
@@ -242,7 +253,7 @@ export default {
     height: 100%;
 }
 
-.beforeTransform {
+.beforeReconstruct {
     transition: none;
 }
 
@@ -251,11 +262,16 @@ export default {
     flex-direction: row;
 }
 
-.transformButton {
+.reconstructButton {
+    width: 200px;
+    height: 36px;
+}
+
+.buildMatrixButton {
     width: 320px;
 }
 
-.transformInfo {
+.reconstructInfo {
     width: 320px;
     max-width: 100%;
     margin: 8px;
@@ -263,6 +279,10 @@ export default {
     vertical-align: top;
     overflow: auto;
     border: 1px solid rgba(#000, 0.12);
+}
+
+.algorithm-name {
+    flex: 1;
 }
 
 .progress {

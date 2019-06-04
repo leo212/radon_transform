@@ -1,11 +1,20 @@
-module.exports = {
+export default {
     PYTHON_SERVER_URL: "http://localhost:8000",
     GET_IMAGE_SERVICE: "/get_image/",
     GET_IMAGE_RESULT_SERVICE: "/get_result/",
-    GET_IMAGE_LIST_SERVICE: "/get_filelist/",
+    GET_IMAGE_LIST_SERVICE: "/get_filelist/uploaded",
+    GET_RESULT_LIST_SERVICE: "/get_filelist/result",
     TRANSFORM_SERVICE: "/transform/",
     GET_STATUS_SERVICE: "/get_job_status/",
     SERVER_STATUS_SERVICE: "/test/",
+    TRANSFORM_TYPES: [
+        { key: "dss", name: "Direct Slant Stack" },
+        { key: "pbim", name: "Parallel Beams Image Rotation" },
+        { key: "shas", name: "Shift and Sum" },
+        { key: "twoscale", name: "Two-Scale Recursion" },
+        { key: "sss", name: "Slow Slant Stack" },
+        { key: "fss", name: "Fast Slant Stack" }
+    ],
 
     // check status of python server
     checkStatus: function() {
@@ -37,6 +46,33 @@ module.exports = {
                             name: image,
                             uploaded: true
                         });
+                    }
+                });
+            }
+        });
+    },
+
+    getRadonList: function(files) {
+        fetch(this.PYTHON_SERVER_URL + this.GET_RESULT_LIST_SERVICE).then(response => {
+            if (response.ok) {
+                response.json().then(json => {
+                    let fileList = json["file_list"];
+                    for (let index in fileList) {
+                        // noinspection JSUnfilteredForInLoop
+                        let image = fileList[index];
+                        let file = {
+                            url: this.PYTHON_SERVER_URL + this.GET_IMAGE_RESULT_SERVICE + image,
+                            name: image,
+                            uploaded: true
+                        };
+
+                        let parts = image.match(/(.*)\.(.*)\.(.*)\.(.*)/);
+
+                        if (parts.length >= 5) {
+                            file["algorithm"] = parts[2];
+                            file["variant"] = parts[3];
+                        }
+                        files.push(file);
                     }
                 });
             }
