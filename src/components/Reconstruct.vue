@@ -148,6 +148,10 @@ export default {
     mounted: function() {
         this.$data.imageWidth = this.$refs.sourceImage.width;
         this.$data.imageHeight = this.$refs.sourceImage.height;
+        if (this.$props.algorithm === 'sss' || this.$props.algorithm === 'fss') {
+            this.$data.matrixProgress = 100;
+            this.$data.matrixBuilt = true;
+        }
     },
 
     methods: {
