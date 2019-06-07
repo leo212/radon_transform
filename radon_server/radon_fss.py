@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import sparse
 
 from radon_server.radon_thread import RadonTransformThread
 
@@ -81,7 +82,7 @@ class FastSlantStackTransform(RadonTransformThread):
             alpha = float(-r) / n
             t = self.ffft2(Z[r + n, :], alpha)
             Y[0:n, r + n] = t.transpose()
-            self.update_progress(r, n*3)
+            self.update_progress(r, n * 3)
 
         PaddedX = np.hstack((np.zeros((n, n // 2)), image, np.zeros((n, n // 2)))).transpose()
         Z = np.fft.fftshift(PaddedX, 0)
@@ -96,7 +97,7 @@ class FastSlantStackTransform(RadonTransformThread):
             alpha = float(-r) / n
             t = self.ffft2(Z[n - r - 1, :], alpha)
             Y[n:2 * n, r + n] = t.transpose()
-            self.update_progress(n+r, n*3)
+            self.update_progress(n + r, n * 3)
 
         Y = Y / (np.sqrt(2) * n)  # Normalization
         return Y
@@ -109,7 +110,8 @@ class FastSlantStackTransform(RadonTransformThread):
         P = np.fft.fftshift(P, axes=0)
         S = np.real(P) * 2 * n
         self.radon = S
-        self.update_progress(100,100)
+        self.update_progress(100, 100)
+        return self.radon
 
     def Adj_PPFFT(self, Y):
         m = len(Y)
@@ -149,9 +151,9 @@ class FastSlantStackTransform(RadonTransformThread):
         X1 = np.fft.fftshift(X1, axes=0)
         X1 = np.fft.ifft(X1, axis=0)  # ,[],1)
         X1 = np.fft.fftshift(X1, axes=0).transpose()
-        X1 = X1[:, n / 2:3 * n / 2]
-        X0 = X0[n / 2:3 * n / 2, :]
-        X = (X0 + X1) / n
+        X1 = X1[:, n // 2:3 * n // 2]
+        X0 = X0[n // 2:3 * n // 2, :]
+        X = (X0 + X1) // n
 
         return X
 
@@ -162,3 +164,28 @@ class FastSlantStackTransform(RadonTransformThread):
         P = np.fft.fftshift(P, axes=0)
         X = np.real(self.Adj_PPFFT(P.transpose()))
         return X
+
+    def run_reconstruct(self, image, n, variant=None):
+        Y = np.reshape(image, (4 * n * n))
+
+        def mv(v):
+            image = np.reshape(v, (n, n))
+            radon = self.fss(image, n)
+            result = np.reshape(radon, 4 * n * n)
+            return result
+
+        def rmv(v):
+            image = np.reshape(v, (2 * n, 2 * n))
+            radon = self.Adj_FSS(image, n)
+            result = np.reshape(radon, n * n)
+            return result
+
+        A = sparse.linalg.LinearOperator((4 * n * n, n * n), matvec=mv, rmatvec=rmv)
+        AT = sparse.linalg.LinearOperator([n * n, 4 * n * n], matvec=rmv, rmatvec=mv)
+
+        # XCG = sparse.linalg.cg(AT*A, AT*Y)[0]
+        XC2 = sparse.linalg.lsqr(A, Y)[0]
+
+        xc = np.reshape(XC2, (n, n))
+        # xcg = np.reshape(XCG, (n, n))
+        self.reconstructed = xc

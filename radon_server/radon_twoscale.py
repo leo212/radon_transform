@@ -14,7 +14,7 @@ class TwoScaleTransform(RadonTransformThread):
     def get_algorithm_name(self):
         return "twoscale"
 
-    def run_algorithm(self, image, n, variant=None):
+    def run_transform(self, image, n, variant=None):
         self.run_two_scale_radon(image, n)
 
     # direct radon transform - used when we reached to a small image that can no longer calculated recursively

@@ -60,7 +60,7 @@ class RadonTransformThread(Thread):
         A = sparse.load_npz(matrix_filename)
 
         # reconstruct
-        R = np.reshape(image, (n * n))
+        R = np.reshape(image, (n * n * self.ratio * self.ratio))
 
         # XCG = sparse.linalg.cg(A.transpose() * A, A.transpose() * R)[0]
         XC2 = sparse.linalg.lsqr(A, R)[0]
@@ -111,12 +111,12 @@ class RadonTransformThread(Thread):
 
         elif self.action == "build_matrix":
             print("build matrix started for " + self.get_algorithm_name())
-            n = self.args["size"]
+            n = self.args["size"] // self.ratio
 
         elif self.action == "reconstruct":
             print("image reconstruction started for " + self.args["source_file"])
             image = misc.imread(self.args["source_file"], flatten=True).astype('float64')
-            n = int(np.shape(image)[0])
+            n = int(np.shape(image)[0]) // self.ratio
 
         self.startTime = time.time()
         self.start_algorithm(image, n, self.variant, self.action)
