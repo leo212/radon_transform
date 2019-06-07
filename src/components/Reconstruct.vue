@@ -5,9 +5,19 @@
                 Radon Algorithm
                 <div class="md-subheading">{{ getAlgorithmName(algorithm) }}</div>
             </div>
-            <md-button class="buildMatrixButton md-raised md-primary" :disabled="animate" @click="buildMatrix()"
-                >Build Matrix</md-button
-            >
+            <div class="runMatrixBuildButton">
+                <md-button
+                    class="buildMatrixButton md-raised md-primary"
+                    :disabled="matrixProgress > 0"
+                    @click="buildMatrix()"
+                    >Build Matrix</md-button
+                >
+                <md-progress-bar
+                    md-mode="determinate"
+                    :md-value="matrixProgress"
+                    class="buildMatrixProgress"
+                ></md-progress-bar>
+            </div>
             <div class="reconstructButton">
                 <md-button
                     class="reconstructButton md-raised md-primary"
@@ -21,16 +31,21 @@
             </div>
         </div>
         <div class="transformPics">
-            <div class="sourceHolder">
+            <div v-if="started || reconstructed" class="imageHolder">
+                <div class="md-subheader">Original Image</div>
+                <img ref="originalImage" class="source" :src="originalFilename" :alt="name" @load="imageLoaded" />
+            </div>
+            <div class="imageHolder">
+                <div class="md-subheader">Radon Transform</div>
                 <img ref="sourceImage" class="source" :src="filename" :alt="name" @load="imageLoaded" />
             </div>
-            <div class="targetHolder">
-                <div v-if="started" class="target">
-                    <img class="target" :src="targetFilename + '?v=' + new Date().getTime()" :alt="name" />
-                    <md-progress-bar md-mode="determinate" :md-value="progress"></md-progress-bar>
-                </div>
+            <div v-if="reconstructed" class="imageHolder">
+                <div class="md-subheader">Reconstructed Image</div>
+                <img class="target" :src="targetFilename + '?v=' + new Date().getTime()" :alt="name" />
+            </div>
+            <div v-if="!reconstructed" class="targetHolder">
                 <md-empty-state
-                    v-else-if="!matrixBuilt"
+                    v-if="!matrixBuilt"
                     class="beforeReconstruct"
                     md-icon="assistant"
                     md-label="Reconstruction Matrix is not Available"
@@ -111,7 +126,9 @@ export default {
             imageWidth: 0,
             imageHeight: 0,
             progress: 0,
+            matrixProgress: 0,
             started: false,
+            reconstructed: false,
             targetFilename: "",
             animate: false,
             error: "",
@@ -123,7 +140,8 @@ export default {
             secondsRemaining: "00",
             millisecondsRemaining: "000",
             cond: 0,
-            transformTypes: server.TRANSFORM_TYPES
+            transformTypes: server.TRANSFORM_TYPES,
+            originalFilename: ""
         };
     },
     props: ["filename", "name", "algorithm", "variant"],
@@ -146,19 +164,13 @@ export default {
             }
         },
         buildMatrix() {
-            this.$data.matrixBuilt = true;
-        },
-        runReconstruct() {
             let data = this.$data;
-
-            data.animate = true;
-            data.started = true;
 
             // run radon transform service on server
             let checkStatusFunc = function() {
                 server.checkJobStatus(requestId).then(status => {
                     // update progress and time passed
-                    data.progress = status.progress;
+                    data.matrixProgress = status.progress;
                     data.minutesElapsed = Math.trunc(status.took / 1000 / 60)
                         .toString()
                         .padStart(2, "0");
@@ -181,26 +193,77 @@ export default {
                         .toString()
                         .padStart(3, "0");
 
-                    data.cond = status.cond;
-
                     // if the process hasn't ended it, check it again within 500ms
-                    if (data.progress < 100) setTimeout(checkStatusFunc, 200);
-                    else data.animate = false;
+                    if (data.matrixProgress < 100) setTimeout(checkStatusFunc, 200);
+                    else {
+                        data.matrixBuilt = true;
+                    }
                 });
             };
 
             server
-                .runTransform(this.$data.selectedAlgorithm, this.$props.name, this.$data.variant)
+                .runBuildMatrix(this.$props.algorithm, this.$props.variant, this.$data.width)
                 .then(json => {
                     requestId = json.requestId;
-                    // set target filename
-                    data.targetFilename = server.getResultFileUrl(json.target);
                     // start an interval to check the job status until it will be completed
                     setTimeout(checkStatusFunc, 200);
                 })
                 .catch(error => {
-                    data.started = false;
-                    data.animate = false;
+                    data.error = "Server Error: " + error;
+                    data.showSnackbar = true;
+                });
+        },
+        runReconstruct() {
+            let data = this.$data;
+
+            // run radon transform service on server
+            let checkStatusFunc = function() {
+                server.checkJobStatus(requestId).then(status => {
+                    // update progress and time passed
+                    data.matrixProgress = status.progress;
+                    data.minutesElapsed = Math.trunc(status.took / 1000 / 60)
+                        .toString()
+                        .padStart(2, "0");
+                    data.secondsElapsed = Math.trunc((status.took / 1000) % 60)
+                        .toString()
+                        .padStart(2, "0");
+                    data.millisecondsElapsed = Math.trunc(status.took % 1000)
+                        .toString()
+                        .padStart(3, "0");
+
+                    // estimate time remaining
+                    let remaining = (100 / status.progress) * status.took - status.took;
+                    data.minutesRemaining = Math.trunc(remaining / 1000 / 60)
+                        .toString()
+                        .padStart(2, "0");
+                    data.secondsRemaining = Math.trunc((remaining / 1000) % 60)
+                        .toString()
+                        .padStart(2, "0");
+                    data.millisecondsRemaining = Math.trunc(remaining % 1000)
+                        .toString()
+                        .padStart(3, "0");
+
+                    data.progress = status.progress;
+                    // if the process hasn't ended it, check it again within 500ms
+                    if (status.status !== "completed") setTimeout(checkStatusFunc, 200);
+                    else {
+                        data.reconstructed = true;
+                        data.started = false;
+                    }
+                });
+            };
+
+            server
+                .runReconstruct(this.$props.name)
+                .then(json => {
+                    requestId = json.requestId;
+                    // start an interval to check the job status until it will be completed
+                    setTimeout(checkStatusFunc, 200);
+                    data.started = true;
+                    data.targetFilename = server.getReconstructedFileUrl(json.target);
+                    data.originalFilename = server.getImageFileUrl(json.target);
+                })
+                .catch(error => {
                     data.error = "Server Error: " + error;
                     data.showSnackbar = true;
                 });
@@ -221,7 +284,15 @@ export default {
 .transformPics {
     display: flex;
     flex-direction: row;
+    justify-content: space-between;
 }
+
+.imageHolder {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
 .sourceHolder {
     display: flex;
     justify-content: center;
@@ -237,9 +308,12 @@ export default {
 }
 
 .source {
+    flex: 1;
+    padding: 8px;
     max-width: 512px;
     width: 100%;
     height: 100%;
+    object-fit: contain;
 }
 
 .emptyImage {
@@ -248,9 +322,12 @@ export default {
 }
 
 .target {
+    flex: 1;
+    padding: 8px;
     max-width: 512px;
     width: 100%;
     height: 100%;
+    object-fit: contain;
 }
 
 .beforeReconstruct {
@@ -283,6 +360,16 @@ export default {
 
 .algorithm-name {
     flex: 1;
+}
+
+.runMatrixBuildButton {
+    display: flex;
+    flex-direction: column;
+}
+
+.buildMatrixProgress {
+    margin-left: 8px;
+    margin-right: 8px;
 }
 
 .progress {
