@@ -279,7 +279,7 @@ class TwoScaleTransform(RadonTransformThread):
         self.radon = np.zeros((n, n), dtype='float64')
 
         # load radon 4x4 calculation matrix
-        A = sparse.load_npz("radon_server/npz/direct_radon4x4.npz")
+        A = sparse.load_npz("radon_server/static/npz/direct_radon4x4.npz")
 
         # calculate direct radon transform for the minimum squares
         size = self.minSquareSize

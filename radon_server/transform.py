@@ -8,11 +8,18 @@ from . import radon_fss
 
 jobId = 0
 threadMap = {}
+algorithms = {"dss": radon_dss.DSSRadon,
+              "pbim": radon_pbim.PBIMTransform,
+              "shas": radon_shas.SHASTransform,
+              "twoscale": radon_twoscale.TwoScaleTransform,
+              "sss": radon_sss.SlowSlantStackTransform,
+              "fss": radon_fss.FastSlantStackTransform}
 
 
 # noinspection PyUnusedLocal
 def transform(request, algorithm, variant, filename):
     global jobId
+    global algorithms
     jobId += 1
     request_obj = {"requestId": jobId}
     target_filename = filename[:-3] + algorithm + "." + variant + "." + filename[-3:]
@@ -20,20 +27,55 @@ def transform(request, algorithm, variant, filename):
     target = "radon_server/static/result/" + target_filename
     request_obj["target"] = target_filename
 
-    if algorithm == "dss":
-        thread = radon_dss.DSSRadon(source, target, variant)
-    elif algorithm == "pbim":
-        thread = radon_pbim.PBIMTransform(source, target, variant)
-    elif algorithm == "shas":
-        thread = radon_shas.SHASTransform(source, target, variant)
-    elif algorithm == "twoscale":
-        thread = radon_twoscale.TwoScaleTransform(source, target, variant)
-    elif algorithm == "sss":
-        thread = radon_sss.SlowSlantStackTransform(source, target, variant)
-    elif algorithm == "fss":
-        thread = radon_fss.FastSlantStackTransform(source, target, variant)
+    if algorithm in algorithms:
+        args = {"source_file": source, "target_file": target}
+        thread = algorithms[algorithm](action="transform", variant=variant, args=args)
     else:
-        return JsonResponse({"error": "Unsupported Algorithm"})
+        return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})
+
+    thread.start()
+    threadMap[jobId] = thread
+
+    return JsonResponse(request_obj)
+
+
+def build_matrix(request, algorithm, variant, size):
+    global jobId
+    jobId += 1
+    request_obj = {"requestId": jobId}
+    if algorithm in algorithms:
+        args = {"size": size}
+        thread = algorithms[algorithm](action="build_matrix", variant=variant, args=args)
+    else:
+        return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})
+
+    thread.start()
+    threadMap[jobId] = thread
+
+    return JsonResponse(request_obj)
+
+
+def reconstruct(request, filename):
+    global jobId
+    global algorithms
+    jobId += 1
+    request_obj = {"requestId": jobId}
+    args = filename.split(".")
+    if len(args) < 4:
+        return JsonResponse({"error": "Filename is not a radon transform"})
+    else:
+        target_filename = "".join(args[0:len(args) - 3]) + "." + args[len(args)-1]
+        algorithm = args[len(args) - 3]
+        variant = args[len(args) - 2]
+        source = "radon_server/static/result/" + filename
+        target = "radon_server/static/reconstructed/" + target_filename
+        request_obj["target"] = target_filename
+
+        if algorithm in algorithms:
+            args = {"source_file": source, "target_file": target}
+            thread = algorithms[algorithm](action="reconstruct", variant=variant, args=args)
+        else:
+            return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})
 
     thread.start()
     threadMap[jobId] = thread
@@ -58,11 +100,14 @@ def get_job_status(request, job_id):
 
         response['progress'] = thread.progress
         response['took'] = thread.took
-        response['targetFile'] = thread.target_file
-        response['cond'] = thread.cond
+        if thread.action == "transform":
+            response['targetFile'] = thread.args["target_file"]
+            response['cond'] = thread.cond
 
-        # save current result into file
-        thread.save()
+            # save current result into file
+            thread.save()
+        elif thread.action == "build_matrix":
+            response["matrix_size"] = thread.matrix_size
 
         # return status response
         return JsonResponse(response)

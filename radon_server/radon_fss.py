@@ -4,10 +4,14 @@ from radon_server.radon_thread import RadonTransformThread
 
 
 class FastSlantStackTransform(RadonTransformThread):
+    def __init__(self, action="transform", variant=None, args=None):
+        super(FastSlantStackTransform, self).__init__(action, variant, args)
+        self.ratio = 2
+
     def get_algorithm_name(self):
         return "fss"
 
-    def run_algorithm(self, image, n, variant=None):
+    def run_transform(self, image, n, variant=None):
         self.fss(image, n)
 
     def ffft(self, x, alpha):

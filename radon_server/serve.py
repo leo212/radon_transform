@@ -15,3 +15,11 @@ def get_result(request, filename):
 
     response['Access-Control-Allow-Origin'] = "*"
     return response
+
+
+def get_reconstructed(request, filename):
+    # serve a single result image
+    response = static_serve(request, filename, document_root="radon_server/static/reconstructed", show_indexes=False)
+
+    response['Access-Control-Allow-Origin'] = "*"
+    return response

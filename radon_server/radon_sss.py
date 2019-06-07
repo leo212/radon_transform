@@ -4,10 +4,14 @@ from radon_server.radon_thread import RadonTransformThread
 
 
 class SlowSlantStackTransform(RadonTransformThread):
+    def __init__(self, action="transform", variant=None, args=None):
+        super(SlowSlantStackTransform, self).__init__(action, variant, args)
+        self.ratio = 2
+
     def get_algorithm_name(self):
         return "sss"
 
-    def run_algorithm(self, image, n, variant=None):
+    def run_transform(self, image, n, variant=None):
         self.slow_slant_stack(image, n)
 
     def slow_slant_stack(self, image, n):
