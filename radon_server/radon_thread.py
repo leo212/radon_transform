@@ -87,7 +87,12 @@ class RadonTransformThread(Thread):
 
     def save(self):
         if self.action == "transform":
-            misc.imsave(self.args["target_file"], self.radon)
+            # save an image file for preview the radon transform
+            misc.imsave(self.args["target_image"], self.radon)
+
+            # save the radon file itself
+            np.save(self.args["target_file"], self.radon)
+
             # calculate the cond value of the matrix
             (w, v) = np.linalg.eig(self.radon.transpose() * self.radon)
             self.cond = np.sqrt(np.max(np.real(v)) - np.min(np.real(v)))
@@ -115,12 +120,12 @@ class RadonTransformThread(Thread):
 
         elif self.action == "reconstruct":
             print("image reconstruction started for " + self.args["source_file"])
-            image = misc.imread(self.args["source_file"], flatten=True).astype('float64')
-            n = int(np.shape(image)[0]) // self.ratio
+            image = np.load(self.args["source_file"])
+            n = len(image) // self.ratio
 
         self.startTime = time.time()
         self.start_algorithm(image, n, self.variant, self.action)
-        print(self.get_algorithm_name() + " took:" + str(self.took) + "ms")
+        print(self.get_algorithm_name() + " " + self.action + " took:" + str(self.took) + "ms")
         self.progress = 100
 
         # save transform image file

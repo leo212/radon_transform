@@ -24,11 +24,12 @@ def transform(request, algorithm, variant, filename):
     request_obj = {"requestId": jobId}
     target_filename = filename[:-3] + algorithm + "." + variant + "." + filename[-3:]
     source = "radon_server/static/uploaded/" + filename
-    target = "radon_server/static/result/" + target_filename
+    target_image = "radon_server/static/result/" + target_filename
+    target_file = "radon_server/static/radon/" + filename[:-3] + algorithm + "." + variant
     request_obj["target"] = target_filename
 
     if algorithm in algorithms:
-        args = {"source_file": source, "target_file": target}
+        args = {"source_file": source, "target_file": target_file, "target_image": target_image}
         thread = algorithms[algorithm](action="transform", variant=variant, args=args)
     else:
         return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})
@@ -67,7 +68,7 @@ def reconstruct(request, filename):
         target_filename = "".join(args[0:len(args) - 3]) + "." + args[len(args)-1]
         algorithm = args[len(args) - 3]
         variant = args[len(args) - 2]
-        source = "radon_server/static/result/" + filename
+        source = "radon_server/static/radon/" + filename[:-3] + "npy"
         target = "radon_server/static/reconstructed/" + target_filename
         request_obj["target"] = target_filename
 
