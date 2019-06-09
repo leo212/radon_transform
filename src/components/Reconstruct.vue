@@ -168,18 +168,26 @@ export default {
     },
     props: ["filename", "name", "algorithm", "variant"],
     mounted: function() {
-        this.$data.imageWidth = this.$refs.sourceImage.width;
-        this.$data.imageHeight = this.$refs.sourceImage.height;
-        if (this.$props.algorithm === "sss" || this.$props.algorithm === "fss") {
-            this.$data.matrixProgress = 100;
-            this.$data.matrixBuilt = true;
-        }
+        let data = this.$data;
+        data.imageWidth = this.$refs.sourceImage.width;
+        data.imageHeight = this.$refs.sourceImage.height;
     },
 
     methods: {
         imageLoaded() {
-            this.$data.width = this.$refs.sourceImage.naturalWidth;
-            this.$data.height = this.$refs.sourceImage.naturalHeight;
+            let data = this.$data;
+            data.width = this.$refs.sourceImage.naturalWidth;
+            data.height = this.$refs.sourceImage.naturalHeight;
+
+            // check if matrix file is available for this algorithm and size
+            server
+                .checkIfMatrixAvailable(this.$props.algorithm, this.$props.variant, Math.max(data.width, data.height))
+                .then(available => {
+                    if (available) {
+                        data.matrixProgress = 100;
+                        data.matrixBuilt = true;
+                    }
+                });
         },
         getAlgorithmName(key) {
             let algorithm = server.TRANSFORM_TYPES.filter(type => type.key === key);

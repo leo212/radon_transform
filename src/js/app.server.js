@@ -8,6 +8,7 @@ export default {
     TRANSFORM_SERVICE: "/transform/",
     RECONSTRUCT_SERVICE: "/reconstruct/",
     BUILD_MATRIX_SERVICE: "/build_matrix/",
+    IS_MATRIX_AVAILABLE_SERVICE: "/is_matrix_available/",
     GET_STATUS_SERVICE: "/get_job_status/",
     SERVER_STATUS_SERVICE: "/test/",
     TRANSFORM_TYPES: [
@@ -127,6 +128,24 @@ export default {
                     }
                 }
             );
+        });
+    },
+
+    checkIfMatrixAvailable: function(algorithm, variant, size) {
+        return new Promise((resolve, reject) => {
+            fetch(
+                this.PYTHON_SERVER_URL + this.IS_MATRIX_AVAILABLE_SERVICE + algorithm + "/" + variant + "/" + size
+            ).then(response => {
+                if (response.ok) {
+                    response.json().then(json => {
+                        if (!json.error) {
+                            resolve(json["matrixAvailable"]);
+                        } else {
+                            reject(json.error);
+                        }
+                    });
+                }
+            });
         });
     },
 
