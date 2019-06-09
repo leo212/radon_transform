@@ -24,9 +24,12 @@
                     <md-option v-if="selectedAlgorithm === 'shas'" value="cv2">CV2</md-option>
                 </md-select>
             </md-field>
-            <md-button class="transformButton md-raised md-primary" :disabled="animate" @click="runTransform()"
-                >Transform</md-button
-            >
+            <div>
+                <md-button class="transformButton md-raised md-primary" :disabled="animate" @click="runTransform()"
+                    >Transform</md-button
+                >
+                <md-progress-bar class="progress" md-mode="determinate" :md-value="progress"></md-progress-bar>
+            </div>
         </div>
         <div class="transformPics">
             <div class="sourceHolder">
@@ -35,7 +38,6 @@
             <div class="targetHolder">
                 <div v-if="started" class="target">
                     <img class="target" :src="targetFilename + '?v=' + new Date().getTime()" :alt="name" />
-                    <md-progress-bar md-mode="determinate" :md-value="progress"></md-progress-bar>
                 </div>
                 <md-empty-state
                     v-else
@@ -227,8 +229,11 @@ export default {
 
 .source {
     max-width: 512px;
+    max-height: 512px;
     width: 100%;
     height: 100%;
+    image-rendering: pixelated;
+    object-fit: contain;
 }
 
 .emptyImage {
@@ -238,8 +243,11 @@ export default {
 
 .target {
     max-width: 512px;
+    max-height: 512px;
     width: 100%;
     height: 100%;
+    image-rendering: pixelated;
+    object-fit: contain;
 }
 
 .beforeTransform {
@@ -266,5 +274,7 @@ export default {
 }
 
 .progress {
+    margin-left: 8px;
+    margin-right: 8px;
 }
 </style>

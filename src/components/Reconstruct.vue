@@ -5,12 +5,15 @@
                 Radon Algorithm
                 <div class="md-subheading">{{ getAlgorithmName(algorithm) }}</div>
             </div>
-            <div class="runMatrixBuildButton">
+            <div class="runMatrixBuildButton" v-if="!matrixBuilt">
                 <md-button
                     class="buildMatrixButton md-raised md-primary"
                     :disabled="matrixProgress > 0"
                     @click="buildMatrix()"
                     >Build Matrix</md-button
+                >
+                <md-tooltip v-if="!matrixBuilt"
+                    >Radon matrix need to be built for this image size before running construction</md-tooltip
                 >
                 <md-progress-bar
                     md-mode="determinate"
@@ -18,32 +21,51 @@
                     class="buildMatrixProgress"
                 ></md-progress-bar>
             </div>
-            <div class="reconstructButton">
+            <div class="runMatrixBuildButton" v-else>
                 <md-button
                     class="reconstructButton md-raised md-primary"
-                    :disabled="animate || !matrixBuilt"
+                    :disabled="(started && !reconstructed) || !matrixBuilt"
                     @click="runReconstruct()"
                     >Reconstruct
                 </md-button>
-                <md-tooltip v-if="!matrixBuilt"
-                    >Radon matrix need to be built for this image size before running construction</md-tooltip
-                >
             </div>
         </div>
         <div class="transformPics">
             <div v-if="started || reconstructed" class="imageHolder">
                 <div class="md-subheader">Original Image</div>
-                <img ref="originalImage" class="source" :src="originalFilename" :alt="name" @load="imageLoaded" />
+                <img
+                    ref="originalImage"
+                    class="source"
+                    :src="originalFilename + '?v=' + new Date().getTime()"
+                    :alt="name"
+                    @load="imageLoaded"
+                />
             </div>
             <div class="imageHolder">
                 <div class="md-subheader">Radon Transform</div>
                 <img ref="sourceImage" class="source" :src="filename" :alt="name" @load="imageLoaded" />
             </div>
-            <div v-if="reconstructed" class="imageHolder">
+            <div v-if="started || reconstructed" class="imageHolder">
                 <div class="md-subheader">Reconstructed Image</div>
-                <img class="target" :src="targetFilename + '?v=' + new Date().getTime()" :alt="name" />
+                <img
+                    v-if="reconstructed"
+                    class="target"
+                    :src="targetFilename + '?v=' + new Date().getTime()"
+                    :alt="name"
+                />
+                <div v-if="!reconstructed" class="lds-roller">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div v-if="!reconstructed" class="md-subheader">Reconstructing...</div>
             </div>
-            <div v-if="!reconstructed" class="targetHolder">
+            <div v-if="!reconstructed && !started" class="targetHolder">
                 <md-empty-state
                     v-if="!matrixBuilt"
                     class="beforeReconstruct"
@@ -84,15 +106,15 @@
                         </div>
                     </md-list-item>
 
-                    <md-list-item>
-                        <div class="md-list-item-text">
-                            <span
-                                >Radon Cond:
-                                <md-tooltip>Higher value means it will be harder to reconstruct</md-tooltip></span
-                            >
-                            <span>{{ cond }}</span>
-                        </div>
-                    </md-list-item>
+                    <!--<md-list-item>-->
+                    <!--<div class="md-list-item-text">-->
+                    <!--<span-->
+                    <!--&gt;Radon Cond:-->
+                    <!--<md-tooltip>Higher value means it will be harder to reconstruct</md-tooltip></span-->
+                    <!--&gt;-->
+                    <!--<span>{{ cond }}</span>-->
+                    <!--</div>-->
+                    <!--</md-list-item>-->
                 </md-list>
             </div>
         </div>
@@ -148,7 +170,7 @@ export default {
     mounted: function() {
         this.$data.imageWidth = this.$refs.sourceImage.width;
         this.$data.imageHeight = this.$refs.sourceImage.height;
-        if (this.$props.algorithm === 'sss' || this.$props.algorithm === 'fss') {
+        if (this.$props.algorithm === "sss" || this.$props.algorithm === "fss") {
             this.$data.matrixProgress = 100;
             this.$data.matrixBuilt = true;
         }
@@ -206,7 +228,11 @@ export default {
             };
 
             server
-                .runBuildMatrix(this.$props.algorithm, this.$props.variant, this.$data.width)
+                .runBuildMatrix(
+                    this.$props.algorithm,
+                    this.$props.variant,
+                    Math.max(this.$data.width, this.$data.height)
+                )
                 .then(json => {
                     requestId = json.requestId;
                     // start an interval to check the job status until it will be completed
@@ -264,6 +290,7 @@ export default {
                     // start an interval to check the job status until it will be completed
                     setTimeout(checkStatusFunc, 200);
                     data.started = true;
+                    data.reconstructed = false;
                     data.targetFilename = server.getReconstructedFileUrl(json.target);
                     data.originalFilename = server.getImageFileUrl(json.target);
                 })
@@ -285,6 +312,34 @@ export default {
     flex-direction: column;
 }
 
+.transformDiv {
+    display: flex;
+    flex-direction: row;
+}
+
+.algorithm-name {
+    flex: 1;
+}
+
+.reconstructButton {
+    width: 320px;
+    height: 36px;
+}
+
+.buildMatrixButton {
+    width: 320px;
+}
+
+.runMatrixBuildButton {
+    display: flex;
+    flex-direction: column;
+}
+
+.buildMatrixProgress {
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
 .transformPics {
     display: flex;
     flex-direction: row;
@@ -294,6 +349,7 @@ export default {
 .imageHolder {
     display: flex;
     flex-direction: column;
+    align-items: center;
     flex: 1;
 }
 
@@ -312,44 +368,27 @@ export default {
 }
 
 .source {
-    flex: 1;
     padding: 8px;
     max-width: 512px;
+    max-height: 512px;
     width: 100%;
     height: 100%;
     object-fit: contain;
-}
-
-.emptyImage {
-    background: black;
-    flex: 1;
+    image-rendering: pixelated;
 }
 
 .target {
-    flex: 1;
     padding: 8px;
     max-width: 512px;
+    max-height: 512px;
     width: 100%;
     height: 100%;
     object-fit: contain;
+    image-rendering: pixelated;
 }
 
 .beforeReconstruct {
     transition: none;
-}
-
-.transformDiv {
-    display: flex;
-    flex-direction: row;
-}
-
-.reconstructButton {
-    width: 200px;
-    height: 36px;
-}
-
-.buildMatrixButton {
-    width: 320px;
 }
 
 .reconstructInfo {
@@ -360,22 +399,5 @@ export default {
     vertical-align: top;
     overflow: auto;
     border: 1px solid rgba(#000, 0.12);
-}
-
-.algorithm-name {
-    flex: 1;
-}
-
-.runMatrixBuildButton {
-    display: flex;
-    flex-direction: column;
-}
-
-.buildMatrixProgress {
-    margin-left: 8px;
-    margin-right: 8px;
-}
-
-.progress {
 }
 </style>

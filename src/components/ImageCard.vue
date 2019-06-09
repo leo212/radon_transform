@@ -68,4 +68,8 @@ export default {
 .md-card-header {
     padding: 8px;
 }
+
+.md-card-media img {
+    image-rendering: pixelated;
+}
 </style>
