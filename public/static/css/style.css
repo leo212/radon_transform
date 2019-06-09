@@ -18,3 +18,7 @@ a {
   visibility: hidden;
 }
 
+.md-button-content {
+  display: inline-flex;
+  align-items: center;
+}

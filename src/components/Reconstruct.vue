@@ -26,7 +26,15 @@
                     class="reconstructButton md-raised md-primary"
                     :disabled="(started && !reconstructed) || !matrixBuilt"
                     @click="runReconstruct()"
-                    >Reconstruct
+                >
+                    <span v-if="!started">Reconstruct</span>
+                    <span v-else>Reconstructing...</span>
+                    <md-progress-spinner
+                        v-if="started && !reconstructed"
+                        :md-diameter="24"
+                        :md-stroke="3"
+                        md-mode="indeterminate"
+                    ></md-progress-spinner>
                 </md-button>
             </div>
         </div>
@@ -45,7 +53,7 @@
                 <div class="md-subheader">Radon Transform</div>
                 <img ref="sourceImage" class="source" :src="filename" :alt="name" @load="imageLoaded" />
             </div>
-            <div v-if="started || reconstructed" class="imageHolder">
+            <div v-if="reconstructed" class="imageHolder">
                 <div class="md-subheader">Reconstructed Image</div>
                 <img
                     v-if="reconstructed"
@@ -53,17 +61,6 @@
                     :src="targetFilename + '?v=' + new Date().getTime()"
                     :alt="name"
                 />
-                <div v-if="!reconstructed" class="lds-roller">
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                </div>
-                <div v-if="!reconstructed" class="md-subheader">Reconstructing...</div>
             </div>
             <div v-if="!reconstructed && !started" class="targetHolder">
                 <md-empty-state
@@ -332,6 +329,10 @@ export default {
 .reconstructButton {
     width: 320px;
     height: 36px;
+}
+
+.md-progress-spinner {
+    margin: 4px;
 }
 
 .buildMatrixButton {
