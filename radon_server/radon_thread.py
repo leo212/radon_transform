@@ -34,6 +34,9 @@ class RadonTransformThread(Thread):
     def run_transform(self, image, n, variant=None):
         pass
 
+    def need_matrix(self):
+        return True
+
     def run_build_matrix(self, n, variant):
         cols = []
         progress = 0

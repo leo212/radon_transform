@@ -167,6 +167,9 @@ class FastSlantStackTransform(RadonTransformThread):
         X = np.real(self.Adj_PPFFT(P.transpose()))
         return X
 
+    def need_matrix(self):
+        return False
+
     def run_reconstruct(self, image, n, variant=None):
         self.update_progress(0, 100)
         self.should_update_progress = False

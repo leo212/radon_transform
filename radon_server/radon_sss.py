@@ -49,6 +49,9 @@ class SlowSlantStackTransform(RadonTransformThread):
         self.radon = self.radon / (np.sqrt(2) * n)  # Normalization
         self.radon = self.radon * 2 * n
 
+    def need_matrix(self):
+        return False
+
     # SSS algorithm uses FSS reconstruction method
     def run_reconstruct(self, image, n, variant=None):
         fss = radon_fss.FastSlantStackTransform(action="reconstruct", args=self.args)

@@ -1,3 +1,5 @@
+import os
+
 from django.http import JsonResponse
 from . import radon_dss
 from . import radon_pbim
@@ -40,6 +42,7 @@ def transform(request, algorithm, variant, filename):
     return JsonResponse(request_obj)
 
 
+# noinspection PyUnusedLocal
 def build_matrix(request, algorithm, variant, size):
     global jobId
     jobId += 1
@@ -56,6 +59,17 @@ def build_matrix(request, algorithm, variant, size):
     return JsonResponse(request_obj)
 
 
+# noinspection PyUnusedLocal
+def is_matrix_available(request, algorithm, variant, size):
+    if algorithm in algorithms:
+        current_algorithm = algorithms[algorithm]()
+        available = (not current_algorithm.need_matrix()) or os.path.isfile(current_algorithm.get_matrix_filename(algorithm, variant, size // current_algorithm.ratio))
+        return JsonResponse({"matrixAvailable": available})
+    else:
+        return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})
+
+
+# noinspection PyUnusedLocal
 def reconstruct(request, filename):
     global jobId
     global algorithms
@@ -65,7 +79,7 @@ def reconstruct(request, filename):
     if len(args) < 4:
         return JsonResponse({"error": "Filename is not a radon transform"})
     else:
-        target_filename = ".".join(args[0:len(args) - 3]) + "." + args[len(args)-1]
+        target_filename = ".".join(args[0:len(args) - 3]) + "." + args[len(args) - 1]
         algorithm = args[len(args) - 3]
         variant = args[len(args) - 2]
         source = "radon_server/static/radon/" + filename[:-3] + "npy"
