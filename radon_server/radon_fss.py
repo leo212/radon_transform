@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 from scipy import sparse
 
@@ -166,18 +168,23 @@ class FastSlantStackTransform(RadonTransformThread):
         return X
 
     def run_reconstruct(self, image, n, variant=None):
+        self.update_progress(0, 100)
+        self.should_update_progress = False
+
         Y = np.reshape(image, (4 * n * n))
 
         def mv(v):
             image = np.reshape(v, (n, n))
             radon = self.fss(image, n)
             result = np.reshape(radon, 4 * n * n)
+            self.took = (time.time() - self.startTime) * 1000
             return result
 
         def rmv(v):
             image = np.reshape(v, (2 * n, 2 * n))
             radon = self.Adj_FSS(image, n)
             result = np.reshape(radon, n * n)
+            self.took = (time.time() - self.startTime) * 1000
             return result
 
         A = sparse.linalg.LinearOperator((4 * n * n, n * n), matvec=mv, rmatvec=rmv)
@@ -189,3 +196,6 @@ class FastSlantStackTransform(RadonTransformThread):
         xc = np.reshape(XC2, (n, n))
         # xcg = np.reshape(XCG, (n, n))
         self.reconstructed = xc
+        self.should_update_progress = True
+        self.update_progress(100, 100)
+        self.save()

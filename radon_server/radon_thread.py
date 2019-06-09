@@ -65,7 +65,7 @@ class RadonTransformThread(Thread):
         # XCG = sparse.linalg.cg(A.transpose() * A, A.transpose() * R)[0]
         XC2 = sparse.linalg.lsqr(A, R)[0]
         self.reconstructed = np.reshape(XC2, (n, n))
-        self.update_progress(100,100)
+        self.update_progress(100, 100)
 
     def start_algorithm(self, image, n, variant, action):
         if action == "transform":

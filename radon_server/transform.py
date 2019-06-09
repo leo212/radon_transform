@@ -65,7 +65,7 @@ def reconstruct(request, filename):
     if len(args) < 4:
         return JsonResponse({"error": "Filename is not a radon transform"})
     else:
-        target_filename = "".join(args[0:len(args) - 3]) + "." + args[len(args)-1]
+        target_filename = ".".join(args[0:len(args) - 3]) + "." + args[len(args)-1]
         algorithm = args[len(args) - 3]
         variant = args[len(args) - 2]
         source = "radon_server/static/radon/" + filename[:-3] + "npy"
