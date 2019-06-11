@@ -2,7 +2,12 @@ import time
 import numpy as np
 from scipy import misc, sparse
 import sys
+from skimage.measure import compare_ssim as ssim
 from threading import Thread
+
+
+def get_matrix_filename(algorithm, variant, size):
+    return "radon_server/static/npz/" + algorithm + "." + variant + "." + str(size) + ".npz"
 
 
 class RadonTransformThread(Thread):
@@ -24,6 +29,7 @@ class RadonTransformThread(Thread):
         self.ratio = 1
         self.matrix = None
         self.matrix_size = 0
+        self.similarity = None
 
         super(RadonTransformThread, self).__init__()
 
@@ -57,9 +63,14 @@ class RadonTransformThread(Thread):
 
         self.matrix = sparse.hstack(cols)
 
+    def calculate_reconstructed_score(self):
+        original_image = misc.imread(self.args["original_file"], flatten=True).astype('float64')
+        self.similarity = ssim(original_image, self.reconstructed, data_range=255)
+        print(self.similarity)
+
     def run_reconstruct(self, image, n, variant=None):
         # load matrix file
-        matrix_filename = self.get_matrix_filename(self.get_algorithm_name(), variant, n)
+        matrix_filename = get_matrix_filename(self.get_algorithm_name(), variant, n)
         A = sparse.load_npz(matrix_filename)
 
         # reconstruct
@@ -67,7 +78,9 @@ class RadonTransformThread(Thread):
 
         # XCG = sparse.linalg.cg(A.transpose() * A, A.transpose() * R)[0]
         XC2 = sparse.linalg.lsqr(A, R)[0]
-        self.reconstructed = np.reshape(XC2, (n, n))
+
+        self.reconstructed = np.reshape(XC2, (n, n)) * 255
+        self.calculate_reconstructed_score()
         self.update_progress(100, 100)
 
     def start_algorithm(self, image, n, variant, action):
@@ -77,16 +90,13 @@ class RadonTransformThread(Thread):
         elif action == "build_matrix":
             self.run_build_matrix(n, variant)
             sparse.save_npz(
-                self.get_matrix_filename(self.get_algorithm_name(), self.variant, n),
+                get_matrix_filename(self.get_algorithm_name(), self.variant, n),
                 self.matrix)
         elif action == "reconstruct":
             self.reconstructed = np.zeros((n, n), dtype='float64')
             self.run_reconstruct(image, n, variant)
 
         self.took = (time.time() - self.startTime) * 1000
-
-    def get_matrix_filename(self, algorithm, variant, size):
-        return "radon_server/static/npz/" + algorithm + "." + variant + "." + str(size) + ".npz"
 
     def save(self):
         if self.action == "transform":

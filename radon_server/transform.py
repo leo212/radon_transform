@@ -7,6 +7,7 @@ from . import radon_shas
 from . import radon_twoscale
 from . import radon_sss
 from . import radon_fss
+from .radon_thread import get_matrix_filename
 
 jobId = 0
 threadMap = {}
@@ -63,7 +64,7 @@ def build_matrix(request, algorithm, variant, size):
 def is_matrix_available(request, algorithm, variant, size):
     if algorithm in algorithms:
         current_algorithm = algorithms[algorithm]()
-        available = (not current_algorithm.need_matrix()) or os.path.isfile(current_algorithm.get_matrix_filename(algorithm, variant, size // current_algorithm.ratio))
+        available = (not current_algorithm.need_matrix()) or os.path.isfile(get_matrix_filename(algorithm, variant, size // current_algorithm.ratio))
         return JsonResponse({"matrixAvailable": available})
     else:
         return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})
@@ -84,10 +85,11 @@ def reconstruct(request, filename):
         variant = args[len(args) - 2]
         source = "radon_server/static/radon/" + filename[:-3] + "npy"
         target = "radon_server/static/reconstructed/" + target_filename
+        original = "radon_server/static/uploaded/" + target_filename
         request_obj["target"] = target_filename
 
         if algorithm in algorithms:
-            args = {"source_file": source, "target_file": target}
+            args = {"source_file": source, "target_file": target, "original_file": original}
             thread = algorithms[algorithm](action="reconstruct", variant=variant, args=args)
         else:
             return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})
@@ -123,6 +125,8 @@ def get_job_status(request, job_id):
             thread.save()
         elif thread.action == "build_matrix":
             response["matrix_size"] = thread.matrix_size
+        elif thread.action == "reconstruct":
+            response["similarity"] = thread.similarity
 
         # return status response
         return JsonResponse(response)

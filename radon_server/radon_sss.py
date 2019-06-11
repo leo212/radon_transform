@@ -57,3 +57,6 @@ class SlowSlantStackTransform(RadonTransformThread):
         fss = radon_fss.FastSlantStackTransform(action="reconstruct", args=self.args)
         fss.run_reconstruct(image, n, variant)
         self.reconstructed = fss.reconstructed
+        self.calculate_reconstructed_score()
+        self.update_progress(100, 100)
+        self.save()

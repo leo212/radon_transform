@@ -200,5 +200,6 @@ class FastSlantStackTransform(RadonTransformThread):
         # xcg = np.reshape(XCG, (n, n))
         self.reconstructed = xc
         self.should_update_progress = True
+        self.calculate_reconstructed_score()
         self.update_progress(100, 100)
         self.save()
