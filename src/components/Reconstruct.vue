@@ -103,15 +103,20 @@
                         </div>
                     </md-list-item>
 
-                    <!--<md-list-item>-->
-                    <!--<div class="md-list-item-text">-->
-                    <!--<span-->
-                    <!--&gt;Radon Cond:-->
-                    <!--<md-tooltip>Higher value means it will be harder to reconstruct</md-tooltip></span-->
-                    <!--&gt;-->
-                    <!--<span>{{ cond }}</span>-->
-                    <!--</div>-->
-                    <!--</md-list-item>-->
+                    <md-list-item>
+                        <div class="md-list-item-text">
+                            <span
+                                >Reconstruct Similarity (Using SSIM):
+                                <md-tooltip
+                                    >100 value means the reconstructed image and the original image are
+                                    identical</md-tooltip
+                                ></span
+                            >
+                            <v-progress-circular :rotate="270" :size="75" :width="10" :value="similarity">
+                                {{ similarity }}%
+                            </v-progress-circular>
+                        </div>
+                    </md-list-item>
                 </md-list>
             </div>
         </div>
@@ -133,6 +138,7 @@
 
 <script>
 import server from "../js/app.server";
+
 let requestId = 0;
 
 export default {
@@ -158,7 +164,7 @@ export default {
             minutesRemaining: "00",
             secondsRemaining: "00",
             millisecondsRemaining: "000",
-            cond: 0,
+            similarity: 0,
             transformTypes: server.TRANSFORM_TYPES,
             originalFilename: ""
         };
@@ -279,6 +285,7 @@ export default {
                         .padStart(3, "0");
 
                     data.progress = status.progress;
+                    if (data.similarity !== null) data.similarity = Math.round(status.similarity * 1000) / 10;
                     // if the process hasn't ended it, check it again within 500ms
                     if (status.status !== "completed") setTimeout(checkStatusFunc, 200);
                     else {
@@ -296,6 +303,7 @@ export default {
                     setTimeout(checkStatusFunc, 200);
                     data.started = true;
                     data.reconstructed = false;
+                    self.similarity = 0;
                     data.targetFilename = server.getReconstructedFileUrl(json.target);
                     data.originalFilename = server.getImageFileUrl(json.target);
                 })
@@ -408,5 +416,22 @@ export default {
     vertical-align: top;
     overflow: auto;
     border: 1px solid rgba(#000, 0.12);
+}
+
+.v-progress-circular {
+    margin: 1rem;
+}
+
+.md-list-item-text {
+    display: flex;
+    align-items: center;
+}
+
+.md-list-item-container {
+    text-align: center;
+}
+
+.md-list.md-theme-default.md-double-line .md-list-item-text :nth-child(2) {
+    color: var(--md-theme-default-primary, #448aff);
 }
 </style>

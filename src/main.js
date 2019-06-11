@@ -1,17 +1,17 @@
 import Vue from "vue";
+import Vuetify from "vuetify";
 import App from "./App.vue";
-// import "bootstrap/dist/css/bootstrap.css";
-// import "bootstrap-vue/dist/bootstrap-vue.css";
 import "vue-material/dist/vue-material.min.css";
 import "vue-material/dist/theme/default.css";
+import "vuetify/dist/vuetify.min.css";
+
 import VueMaterial from "vue-material";
-// import BootstrapVue from "bootstrap-vue";
 
 // Vue.use(BootstrapVue);
 Vue.use(VueMaterial);
+Vue.use(Vuetify);
 Vue.config.productionTip = false;
-
 // noinspection JSUnusedGlobalSymbols
 new Vue({
-  render: h => h(App)
+    render: h => h(App)
 }).$mount("#app");
