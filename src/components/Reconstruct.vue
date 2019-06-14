@@ -11,7 +11,22 @@
                     <md-option value="direct" v-if="algorithm !== 'sss' && algorithm !== 'fss'">Direct</md-option>
                     <md-option value="lsqr">Least Squares</md-option>
                     <md-option value="cg">Conjugate Gradient</md-option>
+                    <md-option value="gmres">Generalized Minimal RESidual</md-option>
                 </md-select>
+            </md-field>
+            <md-field v-if="matrixBuilt" class="toleranceDiv md-has-value">
+                <label for="toleranceButtons">Tolerance</label>
+                <div id="toleranceButtons" class="toleranceButtons">
+                    <md-button class="md-icon-button" md-primary @click="decreaseTolerance()">
+                        <md-icon>remove</md-icon>
+                        <md-tooltip>Decrease Tolerance - Lower value is faster but less accurate</md-tooltip>
+                    </md-button>
+                    <md-chip>1E-0{{ toleranceExp }}</md-chip>
+                    <md-button class="md-icon-button" md-accent @click="increaseTolerance()">
+                        <md-icon>add</md-icon>
+                        <md-tooltip>Increase Tolerance - Higher value is more accurate but slower</md-tooltip>
+                    </md-button>
+                </div>
             </md-field>
             <div class="runMatrixBuildButton" v-if="!matrixBuilt">
                 <md-button
@@ -175,7 +190,8 @@ export default {
             similarity: 0,
             transformTypes: server.TRANSFORM_TYPES,
             originalFilename: "",
-            method: "lsqr"
+            method: "lsqr",
+            toleranceExp: 6
         };
     },
     props: ["filename", "name", "algorithm", "variant"],
@@ -263,6 +279,12 @@ export default {
                     data.showSnackbar = true;
                 });
         },
+        increaseTolerance() {
+            if (this.$data.toleranceExp < 9) this.$data.toleranceExp++;
+        },
+        decreaseTolerance() {
+            if (this.$data.toleranceExp > 1) this.$data.toleranceExp--;
+        },
         runReconstruct() {
             let data = this.$data;
 
@@ -305,7 +327,7 @@ export default {
             };
 
             server
-                .runReconstruct(this.$props.name, this.$data.method)
+                .runReconstruct(this.$props.name, this.$data.method, this.$data.toleranceExp)
                 .then(json => {
                     requestId = json.requestId;
                     // start an interval to check the job status until it will be completed
@@ -446,5 +468,18 @@ export default {
 
 .method {
     flex: 0;
+}
+
+.toleranceDiv {
+    flex: 0;
+    display: flex;
+    flex-direction: column;
+    margin-left: 8px;
+}
+
+.toleranceButtons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 </style>

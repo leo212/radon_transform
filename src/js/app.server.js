@@ -149,19 +149,21 @@ export default {
         });
     },
 
-    runReconstruct: function(filename, method) {
+    runReconstruct: function(filename, method, tolerance) {
         return new Promise((resolve, reject) => {
-            fetch(this.PYTHON_SERVER_URL + this.RECONSTRUCT_SERVICE + method + "/" + filename).then(response => {
-                if (response.ok) {
-                    response.json().then(json => {
-                        if (!json.error) {
-                            resolve(json);
-                        } else {
-                            reject(json.error);
-                        }
-                    });
+            fetch(this.PYTHON_SERVER_URL + this.RECONSTRUCT_SERVICE + method + "/" + tolerance + "/" + filename).then(
+                response => {
+                    if (response.ok) {
+                        response.json().then(json => {
+                            if (!json.error) {
+                                resolve(json);
+                            } else {
+                                reject(json.error);
+                            }
+                        });
+                    }
                 }
-            });
+            );
         });
     },
 
