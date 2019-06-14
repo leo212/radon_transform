@@ -71,7 +71,7 @@ def is_matrix_available(request, algorithm, variant, size):
 
 
 # noinspection PyUnusedLocal
-def reconstruct(request, filename):
+def reconstruct(request, method, filename):
     global jobId
     global algorithms
     jobId += 1
@@ -90,7 +90,7 @@ def reconstruct(request, filename):
 
         if algorithm in algorithms:
             args = {"source_file": source, "target_file": target, "original_file": original}
-            thread = algorithms[algorithm](action="reconstruct", variant=variant, args=args)
+            thread = algorithms[algorithm](action="reconstruct", variant=variant, method=method, args=args)
         else:
             return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})
 

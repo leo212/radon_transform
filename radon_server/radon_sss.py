@@ -54,7 +54,7 @@ class SlowSlantStackTransform(RadonTransformThread):
 
     # SSS algorithm uses FSS reconstruction method
     def run_reconstruct(self, image, n, variant=None):
-        fss = radon_fss.FastSlantStackTransform(action="reconstruct", args=self.args)
+        fss = radon_fss.FastSlantStackTransform(action="reconstruct", args=self.args, method=self.method)
         fss.run_reconstruct(image, n, variant)
         self.reconstructed = fss.reconstructed
         self.calculate_reconstructed_score()

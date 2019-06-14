@@ -7,8 +7,8 @@ from radon_server.radon_thread import RadonTransformThread
 
 
 class FastSlantStackTransform(RadonTransformThread):
-    def __init__(self, action="transform", variant=None, args=None):
-        super(FastSlantStackTransform, self).__init__(action, variant, args)
+    def __init__(self, action="transform", variant=None, args=None, method="lsqr"):
+        super(FastSlantStackTransform, self).__init__(action, variant, args, method)
         self.ratio = 2
 
     def get_algorithm_name(self):
@@ -191,12 +191,18 @@ class FastSlantStackTransform(RadonTransformThread):
             return result
 
         A = sparse.linalg.LinearOperator((4 * n * n, n * n), matvec=mv, rmatvec=rmv)
-        AT = sparse.linalg.LinearOperator([n * n, 4 * n * n], matvec=rmv, rmatvec=mv)
+        AT = sparse.linalg.LinearOperator((n * n, 4 * n * n), matvec=rmv, rmatvec=mv)
 
-        # XCG = sparse.linalg.cg(AT*A, AT*Y)[0]
-        XC2 = sparse.linalg.lsqr(A, Y)[0]
+        print(self.method)
+        if self.method == "lsqr":
+            reconstructed = sparse.linalg.lsqr(A, Y)[0]
+        elif self.method == "cg":
+            reconstructed = sparse.linalg.cg(AT*A, AT*Y)[0]
+        else:
+            # unsupported method
+            pass
 
-        xc = np.reshape(XC2, (n, n))
+        xc = np.reshape(reconstructed, (n, n))
         # xcg = np.reshape(XCG, (n, n))
         self.reconstructed = xc
         self.should_update_progress = True

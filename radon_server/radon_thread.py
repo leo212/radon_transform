@@ -11,7 +11,7 @@ def get_matrix_filename(algorithm, variant, size):
 
 
 class RadonTransformThread(Thread):
-    def __init__(self, action="transform", variant=None, args=None):
+    def __init__(self, action="transform", variant=None, args=None, method="direct"):
         if args is None:
             self.args = {}
         else:
@@ -30,6 +30,7 @@ class RadonTransformThread(Thread):
         self.matrix = None
         self.matrix_size = 0
         self.similarity = None
+        self.method = method
 
         super(RadonTransformThread, self).__init__()
 
@@ -76,10 +77,14 @@ class RadonTransformThread(Thread):
         # reconstruct
         R = np.reshape(image, (n * n * self.ratio * self.ratio))
 
-        # XCG = sparse.linalg.cg(A.transpose() * A, A.transpose() * R)[0]
-        XC2 = sparse.linalg.lsqr(A, R)[0]
+        if self.method == "direct":
+            reconstructed = sparse.linalg.spsolve(A.transpose()*A, A.transpose()*R)
+        elif self.method == "lsqr":
+            reconstructed = sparse.linalg.lsqr(A, R, atol=1e-06, btol=1e-06)[0]
+        elif self.method == "cg":
+            reconstructed = sparse.linalg.cgs(A.transpose() * A, A.transpose() * R, tol=1e-05)[0]
 
-        self.reconstructed = np.reshape(XC2, (n, n)) * 255
+        self.reconstructed = np.reshape(reconstructed, (n, n)) * 255
         self.calculate_reconstructed_score()
         self.update_progress(100, 100)
 

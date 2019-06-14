@@ -27,7 +27,7 @@ urlpatterns = [
     path('test/', files.get_status, name='get_status'),
     path('get_filelist/<str:folder>', files.get_filelist),
     path('transform/<str:algorithm>/<str:variant>/<str:filename>', transform.transform),
-    path('reconstruct/<str:filename>', transform.reconstruct),
+    path('reconstruct/<str:method>/<str:filename>', transform.reconstruct),
     path('build_matrix/<str:algorithm>/<str:variant>/<int:size>', transform.build_matrix),
     path('is_matrix_available/<str:algorithm>/<str:variant>/<int:size>', transform.is_matrix_available),
     path('get_job_status/<int:job_id>', transform.get_job_status),
