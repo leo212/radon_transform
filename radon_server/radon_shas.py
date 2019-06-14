@@ -6,10 +6,8 @@ from radon_server.radon_thread import RadonTransformThread
 
 
 class SHASTransform(RadonTransformThread):
-    def __init__(self, action="transform", variant=None, args=None, method="direct"):
-        super(SHASTransform, self).__init__(action, variant, args, method)
-        self.ratio = 2
-
+    def get_matrix_ratio(self):
+        return 2
 
     def get_algorithm_name(self):
         return "shas"

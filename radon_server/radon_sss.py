@@ -5,9 +5,8 @@ from radon_server.radon_thread import RadonTransformThread
 
 
 class SlowSlantStackTransform(RadonTransformThread):
-    def __init__(self, action="transform", variant=None, args=None):
-        super(SlowSlantStackTransform, self).__init__(action, variant, args)
-        self.ratio = 2
+    def get_matrix_ratio(self):
+        return 2
 
     def get_algorithm_name(self):
         return "sss"
@@ -52,11 +51,6 @@ class SlowSlantStackTransform(RadonTransformThread):
     def need_matrix(self):
         return False
 
-    # SSS algorithm uses FSS reconstruction method
-    def run_reconstruct(self, image, n, variant=None):
+    def get_matrix(self, variant, n):
         fss = radon_fss.FastSlantStackTransform(action="reconstruct", args=self.args, method=self.method)
-        fss.run_reconstruct(image, n, variant)
-        self.reconstructed = fss.reconstructed
-        self.calculate_reconstructed_score()
-        self.update_progress(100, 100)
-        self.save()
+        return fss.get_matrix(variant, n)

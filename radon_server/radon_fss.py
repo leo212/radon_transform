@@ -7,9 +7,8 @@ from radon_server.radon_thread import RadonTransformThread
 
 
 class FastSlantStackTransform(RadonTransformThread):
-    def __init__(self, action="transform", variant=None, args=None, method="lsqr"):
-        super(FastSlantStackTransform, self).__init__(action, variant, args, method)
-        self.ratio = 2
+    def get_ratio(self):
+        return 2
 
     def get_algorithm_name(self):
         return "fss"
@@ -170,42 +169,28 @@ class FastSlantStackTransform(RadonTransformThread):
     def need_matrix(self):
         return False
 
-    def run_reconstruct(self, image, n, variant=None):
-        self.update_progress(0, 100)
-        self.should_update_progress = False
-
-        Y = np.reshape(image, (4 * n * n))
-
+    # Fast Slant Stack - uses linear operators instead of pre-built matrix
+    def get_matrix(self, variant, n):
+        # load matrix file
         def mv(v):
+            self.should_update_progress = False
             image = np.reshape(v, (n, n))
             radon = self.fss(image, n)
             result = np.reshape(radon, 4 * n * n)
             self.took = (time.time() - self.startTime) * 1000
+            self.should_update_progress = True
             return result
 
         def rmv(v):
+            self.should_update_progress = False
             image = np.reshape(v, (2 * n, 2 * n))
             radon = self.Adj_FSS(image, n)
             result = np.reshape(radon, n * n)
             self.took = (time.time() - self.startTime) * 1000
+            self.should_update_progress = True
             return result
 
         A = sparse.linalg.LinearOperator((4 * n * n, n * n), matvec=mv, rmatvec=rmv)
         AT = sparse.linalg.LinearOperator((n * n, 4 * n * n), matvec=rmv, rmatvec=mv)
 
-        print(self.method)
-        if self.method == "lsqr":
-            reconstructed = sparse.linalg.lsqr(A, Y)[0]
-        elif self.method == "cg":
-            reconstructed = sparse.linalg.cg(AT*A, AT*Y)[0]
-        else:
-            # unsupported method
-            pass
-
-        xc = np.reshape(reconstructed, (n, n))
-        # xcg = np.reshape(XCG, (n, n))
-        self.reconstructed = xc
-        self.should_update_progress = True
-        self.calculate_reconstructed_score()
-        self.update_progress(100, 100)
-        self.save()
+        return A, AT

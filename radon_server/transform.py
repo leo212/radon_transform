@@ -1,3 +1,4 @@
+import math
 import os
 
 from django.http import JsonResponse
@@ -64,14 +65,15 @@ def build_matrix(request, algorithm, variant, size):
 def is_matrix_available(request, algorithm, variant, size):
     if algorithm in algorithms:
         current_algorithm = algorithms[algorithm]()
-        available = (not current_algorithm.need_matrix()) or os.path.isfile(get_matrix_filename(algorithm, variant, size // current_algorithm.ratio))
+        available = (not current_algorithm.need_matrix()) or os.path.isfile(
+            get_matrix_filename(algorithm, variant, size // current_algorithm.ratio))
         return JsonResponse({"matrixAvailable": available})
     else:
         return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})
 
 
 # noinspection PyUnusedLocal
-def reconstruct(request, method, filename):
+def reconstruct(request, method, tolerance, filename):
     global jobId
     global algorithms
     jobId += 1
@@ -89,7 +91,8 @@ def reconstruct(request, method, filename):
         request_obj["target"] = target_filename
 
         if algorithm in algorithms:
-            args = {"source_file": source, "target_file": target, "original_file": original}
+            args = {"source_file": source, "target_file": target, "original_file": original,
+                    "tolerance": math.pow(1E-01, tolerance)}
             thread = algorithms[algorithm](action="reconstruct", variant=variant, method=method, args=args)
         else:
             return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})

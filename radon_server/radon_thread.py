@@ -26,7 +26,7 @@ class RadonTransformThread(Thread):
         self.radon = None
         self.reconstructed = None
         self.variant = variant
-        self.ratio = 1
+        self.ratio = self.get_matrix_ratio()
         self.matrix = None
         self.matrix_size = 0
         self.similarity = None
@@ -37,6 +37,9 @@ class RadonTransformThread(Thread):
     # override those methods
     def get_algorithm_name(self):
         return ""
+
+    def get_matrix_ratio(self):
+        return 1
 
     def run_transform(self, image, n, variant=None):
         pass
@@ -69,20 +72,29 @@ class RadonTransformThread(Thread):
         self.similarity = ssim(original_image, self.reconstructed, data_range=255)
         print(self.similarity)
 
-    def run_reconstruct(self, image, n, variant=None):
+    def get_matrix(self, variant, n):
         # load matrix file
         matrix_filename = get_matrix_filename(self.get_algorithm_name(), variant, n)
         A = sparse.load_npz(matrix_filename)
+        AT = A.transpose()
+        return A, AT
+
+    def run_reconstruct(self, image, n, variant=None):
+        (A, AT) = self.get_matrix(variant, n)
 
         # reconstruct
         R = np.reshape(image, (n * n * self.ratio * self.ratio))
 
         if self.method == "direct":
-            reconstructed = sparse.linalg.spsolve(A.transpose()*A, A.transpose()*R)
+            reconstructed = sparse.linalg.spsolve(AT * A, AT * R)
         elif self.method == "lsqr":
-            reconstructed = sparse.linalg.lsqr(A, R, atol=1e-06, btol=1e-06)[0]
+            reconstructed = sparse.linalg.lsqr(A, R, atol=self.args["tolerance"], btol=self.args["tolerance"])[0]
+        elif self.method == "gmres":
+            reconstructed = sparse.linalg.gmres(AT * A, AT * R, tol=self.args["tolerance"])[0]
         elif self.method == "cg":
-            reconstructed = sparse.linalg.cgs(A.transpose() * A, A.transpose() * R, tol=1e-05)[0]
+            reconstructed = sparse.linalg.cgs(AT * A, AT * R, tol=self.args["tolerance"])[0]
+        else:
+            raise Exception("Unsupported reconstruction method")
 
         self.reconstructed = np.reshape(reconstructed, (n, n)) * 255
         self.calculate_reconstructed_score()
