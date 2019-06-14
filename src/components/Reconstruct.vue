@@ -5,6 +5,14 @@
                 Radon Algorithm
                 <div class="md-subheading">{{ getAlgorithmName(algorithm) }}</div>
             </div>
+            <md-field class="method" v-if="matrixBuilt">
+                <label for="method">Method</label>
+                <md-select v-model="method" name="method" id="method">
+                    <md-option value="direct" v-if="algorithm !== 'sss' && algorithm !== 'fss'">Direct</md-option>
+                    <md-option value="lsqr">Least Squares</md-option>
+                    <md-option value="cg">Conjugate Gradient</md-option>
+                </md-select>
+            </md-field>
             <div class="runMatrixBuildButton" v-if="!matrixBuilt">
                 <md-button
                     class="buildMatrixButton md-raised md-primary"
@@ -166,7 +174,8 @@ export default {
             millisecondsRemaining: "000",
             similarity: 0,
             transformTypes: server.TRANSFORM_TYPES,
-            originalFilename: ""
+            originalFilename: "",
+            method: "lsqr"
         };
     },
     props: ["filename", "name", "algorithm", "variant"],
@@ -296,7 +305,7 @@ export default {
             };
 
             server
-                .runReconstruct(this.$props.name)
+                .runReconstruct(this.$props.name, this.$data.method)
                 .then(json => {
                     requestId = json.requestId;
                     // start an interval to check the job status until it will be completed
@@ -433,5 +442,9 @@ export default {
 
 .md-list.md-theme-default.md-double-line .md-list-item-text :nth-child(2) {
     color: var(--md-theme-default-primary, #448aff);
+}
+
+.method {
+    flex: 0;
 }
 </style>

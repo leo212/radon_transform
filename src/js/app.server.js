@@ -149,9 +149,9 @@ export default {
         });
     },
 
-    runReconstruct: function(filename) {
+    runReconstruct: function(filename, method) {
         return new Promise((resolve, reject) => {
-            fetch(this.PYTHON_SERVER_URL + this.RECONSTRUCT_SERVICE + filename).then(response => {
+            fetch(this.PYTHON_SERVER_URL + this.RECONSTRUCT_SERVICE + method + "/" + filename).then(response => {
                 if (response.ok) {
                     response.json().then(json => {
                         if (!json.error) {
