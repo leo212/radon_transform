@@ -14,7 +14,7 @@
                     <md-option value="gmres">Generalized Minimal RESidual</md-option>
                 </md-select>
             </md-field>
-            <md-field v-if="matrixBuilt" class="toleranceDiv md-has-value">
+            <md-field v-if="matrixBuilt && method!=='direct'" class="toleranceDiv md-has-value" >
                 <label for="toleranceButtons">Tolerance</label>
                 <div id="toleranceButtons" class="toleranceButtons">
                     <md-button class="md-icon-button" md-primary @click="decreaseTolerance()">
