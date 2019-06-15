@@ -7,8 +7,11 @@ from radon_server.radon_thread import RadonTransformThread
 
 
 class FastSlantStackTransform(RadonTransformThread):
-    def get_ratio(self):
+    def get_matrix_ratio(self):
         return 2
+
+    def get_reconstruct_multiply(self):
+        return 1
 
     def get_algorithm_name(self):
         return "fss"

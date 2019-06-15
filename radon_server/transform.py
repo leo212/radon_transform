@@ -1,5 +1,6 @@
 import math
 import os
+import time
 
 from django.http import JsonResponse
 from . import radon_dss
@@ -39,6 +40,7 @@ def transform(request, algorithm, variant, filename):
         return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})
 
     thread.start()
+    thread.started = True
     threadMap[jobId] = thread
 
     return JsonResponse(request_obj)
@@ -98,6 +100,7 @@ def reconstruct(request, method, tolerance, filename):
             return JsonResponse({"error": "Unsupported Algorithm: " + algorithm})
 
     thread.start()
+    thread.started = True
     threadMap[jobId] = thread
 
     return JsonResponse(request_obj)
@@ -111,11 +114,16 @@ def get_job_status(request, job_id):
         thread = threadMap[job_id]
 
         # update running status
-        if thread.progress == 0:
+        if thread.progress == 0 and not thread.started:
             response['status'] = "not started"
         elif thread.progress == 100:
-            response['status'] = "completed"
+            if thread.error is not None:
+                response['status'] = "failed"
+                response['error'] = thread.error.args[0]
+            else:
+                response['status'] = "completed"
         else:
+            thread.took = (time.time() - thread.startTime) * 1000
             response['status'] = "running"
 
         response['progress'] = thread.progress
@@ -129,6 +137,7 @@ def get_job_status(request, job_id):
         elif thread.action == "build_matrix":
             response["matrix_size"] = thread.matrix_size
         elif thread.action == "reconstruct":
+            thread.save()
             response["similarity"] = thread.similarity
 
         # return status response

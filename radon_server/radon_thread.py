@@ -31,6 +31,10 @@ class RadonTransformThread(Thread):
         self.matrix_size = 0
         self.similarity = None
         self.method = method
+        self.error = None
+        self.reconstruct_multiply = self.get_reconstruct_multiply()
+        self.size = 0
+        self.started = False
 
         super(RadonTransformThread, self).__init__()
 
@@ -41,6 +45,9 @@ class RadonTransformThread(Thread):
     def get_matrix_ratio(self):
         return 1
 
+    def get_reconstruct_multiply(self):
+        return 255
+
     def run_transform(self, image, n, variant=None):
         pass
 
@@ -48,29 +55,33 @@ class RadonTransformThread(Thread):
         return True
 
     def run_build_matrix(self, n, variant):
-        cols = []
-        progress = 0
-        for i in range(n):
-            for j in range(n):
-                x = np.zeros((n, n), dtype=np.float64)
-                x[i, j] = 255
-                self.should_update_progress = False
-                self.run_transform(x, n, variant)
-                self.should_update_progress = True
-                rx = self.radon
-                nn = (n * self.ratio * n * self.ratio)
-                col = sparse.coo_matrix((np.reshape(rx, (nn)), (np.arange(nn), np.zeros(nn))))
-                cols.append(col)
-                progress += 1
-                self.matrix_size = sys.getsizeof(cols)
-                self.update_progress(progress, n * n)
+        try:
+            cols = []
+            progress = 0
+            for i in range(n):
+                for j in range(n):
+                    x = np.zeros((n, n), dtype=np.float64)
+                    x[i, j] = 255
+                    self.should_update_progress = False
+                    self.run_transform(x, n, variant)
+                    self.should_update_progress = True
+                    rx = self.radon
+                    nn = (n * self.ratio * n * self.ratio)
+                    col = sparse.coo_matrix((np.reshape(rx, (nn)), (np.arange(nn), np.zeros(nn))))
+                    cols.append(col)
+                    progress += 1
+                    self.matrix_size = sys.getsizeof(cols)
+                    self.update_progress(progress, n * n)
 
-        self.matrix = sparse.hstack(cols)
+            self.matrix = sparse.hstack(cols)
+        except Exception as e:
+            self.update_progress(100, 100)
+            self.error = e
+
 
     def calculate_reconstructed_score(self):
         original_image = misc.imread(self.args["original_file"], flatten=True).astype('float64')
         self.similarity = ssim(original_image, self.reconstructed, data_range=255)
-        print(self.similarity)
 
     def get_matrix(self, variant, n):
         # load matrix file
@@ -79,41 +90,61 @@ class RadonTransformThread(Thread):
         AT = A.transpose()
         return A, AT
 
-    def run_reconstruct(self, image, n, variant=None):
-        (A, AT) = self.get_matrix(variant, n)
-
-        # reconstruct
-        R = np.reshape(image, (n * n * self.ratio * self.ratio))
-
-        if self.method == "direct":
-            reconstructed = sparse.linalg.spsolve(AT * A, AT * R)
-        elif self.method == "lsqr":
-            reconstructed = sparse.linalg.lsqr(A, R, atol=self.args["tolerance"], btol=self.args["tolerance"])[0]
-        elif self.method == "gmres":
-            reconstructed = sparse.linalg.gmres(AT * A, AT * R, tol=self.args["tolerance"])[0]
-        elif self.method == "cg":
-            reconstructed = sparse.linalg.cgs(AT * A, AT * R, tol=self.args["tolerance"])[0]
-        else:
-            raise Exception("Unsupported reconstruction method")
-
-        self.reconstructed = np.reshape(reconstructed, (n, n)) * 255
+    def reconstruct_callback(self, xk):
+        # evaluate progress by comparing to the last reconstructed image
+        progress = ssim(np.reshape(xk, (self.size, self.size)) * self.reconstruct_multiply, self.reconstructed, data_range=255) * 100
+        if progress > self.progress:
+            self.progress = progress
+        self.took = (time.time() - self.startTime) * 1000
+        self.reconstructed = np.reshape(xk, (self.size, self.size)) * self.reconstruct_multiply
         self.calculate_reconstructed_score()
-        self.update_progress(100, 100)
+
+    def run_reconstruct(self, image, n, variant=None):
+        try:
+            (A, AT) = self.get_matrix(variant, n)
+
+            # reconstruct
+            self.size = n
+            R = np.reshape(image, (n * n * self.ratio * self.ratio))
+
+            if self.method == "direct":
+                reconstructed = sparse.linalg.spsolve(AT * A, AT * R)
+            elif self.method == "lsqr":
+                reconstructed = sparse.linalg.lsqr(A, R, atol=self.args["tolerance"], btol=self.args["tolerance"])[0]
+            elif self.method == "gmres":
+                reconstructed = sparse.linalg.gmres(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
+            elif self.method == "cg":
+                reconstructed = sparse.linalg.cgs(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
+            elif self.method == "qmr":
+                reconstructed = sparse.linalg.qmr(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
+            else:
+                raise Exception("Unsupported reconstruction method " + self.method)
+
+            self.reconstructed = np.reshape(reconstructed, (self.size, self.size)) * self.reconstruct_multiply
+            self.calculate_reconstructed_score()
+            self.update_progress(100, 100)
+        except Exception as e:
+            self.update_progress(100, 100)
+            self.error = e
 
     def start_algorithm(self, image, n, variant, action):
-        if action == "transform":
-            self.radon = np.zeros((n, n), dtype='float64')
-            self.run_transform(image, n, variant)
-        elif action == "build_matrix":
-            self.run_build_matrix(n, variant)
-            sparse.save_npz(
-                get_matrix_filename(self.get_algorithm_name(), self.variant, n),
-                self.matrix)
-        elif action == "reconstruct":
-            self.reconstructed = np.zeros((n, n), dtype='float64')
-            self.run_reconstruct(image, n, variant)
+        try:
+            if action == "transform":
+                self.radon = np.zeros((n, n), dtype='float64')
+                self.run_transform(image, n, variant)
+            elif action == "build_matrix":
+                self.run_build_matrix(n, variant)
+                sparse.save_npz(
+                    get_matrix_filename(self.get_algorithm_name(), self.variant, n),
+                    self.matrix)
+            elif action == "reconstruct":
+                self.reconstructed = np.zeros((n, n), dtype='float64')
+                self.run_reconstruct(image, n, variant)
 
-        self.took = (time.time() - self.startTime) * 1000
+            self.took = (time.time() - self.startTime) * 1000
+        except Exception as e:
+            self.update_progress(100, 100)
+            self.error = e
 
     def save(self):
         if self.action == "transform":

@@ -8,6 +8,9 @@ class SlowSlantStackTransform(RadonTransformThread):
     def get_matrix_ratio(self):
         return 2
 
+    def get_reconstruct_multiply(self):
+        return 1
+
     def get_algorithm_name(self):
         return "sss"
 
