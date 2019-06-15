@@ -9,12 +9,12 @@
                 <label for="method">Method</label>
                 <md-select v-model="method" name="method" id="method">
                     <md-option value="direct" v-if="algorithm !== 'sss' && algorithm !== 'fss'">Direct</md-option>
-                    <md-option value="lsqr">Least Squares</md-option>
-                    <md-option value="cg">Conjugate Gradient</md-option>
-                    <md-option value="gmres">Generalized Minimal RESidual</md-option>
+                    <md-option v-for="methodType in methodTypes" :key="methodType.key" :value="methodType.key">{{
+                        methodType.name
+                    }}</md-option>
                 </md-select>
             </md-field>
-            <md-field v-if="matrixBuilt && method!=='direct'" class="toleranceDiv md-has-value" >
+            <md-field v-if="matrixBuilt && method !== 'direct'" class="toleranceDiv md-has-value">
                 <label for="toleranceButtons">Tolerance</label>
                 <div id="toleranceButtons" class="toleranceButtons">
                     <md-button class="md-icon-button" md-primary @click="decreaseTolerance()">
@@ -59,6 +59,11 @@
                         md-mode="indeterminate"
                     ></md-progress-spinner>
                 </md-button>
+                <md-progress-bar
+                    md-mode="determinate"
+                    :md-value="progress"
+                    class="buildMatrixProgress"
+                ></md-progress-bar>
             </div>
         </div>
         <div class="transformPics">
@@ -76,14 +81,9 @@
                 <div class="md-subheader">Radon Transform</div>
                 <img ref="sourceImage" class="source" :src="filename" :alt="name" @load="imageLoaded" />
             </div>
-            <div v-if="reconstructed" class="imageHolder">
+            <div v-if="reconstructed || similarity > 0" class="imageHolder">
                 <div class="md-subheader">Reconstructed Image</div>
-                <img
-                    v-if="reconstructed"
-                    class="target"
-                    :src="targetFilename + '?v=' + new Date().getTime()"
-                    :alt="name"
-                />
+                <img class="target" :src="targetFilename + '?v=' + new Date().getTime()" :alt="name" />
             </div>
             <div v-if="!reconstructed && !started" class="targetHolder">
                 <md-empty-state
@@ -188,7 +188,7 @@ export default {
             secondsRemaining: "00",
             millisecondsRemaining: "000",
             similarity: 0,
-            transformTypes: server.TRANSFORM_TYPES,
+            methodTypes: server.METHOD_TYPES,
             originalFilename: "",
             method: "lsqr",
             toleranceExp: 6
@@ -259,6 +259,10 @@ export default {
                     if (data.matrixProgress < 100) setTimeout(checkStatusFunc, 200);
                     else {
                         data.matrixBuilt = true;
+                        if (status.status === "failed") {
+                            data.showSnackbar = true;
+                            data.error = "Server Error:" + status.error;
+                        }
                     }
                 });
             };
@@ -318,10 +322,14 @@ export default {
                     data.progress = status.progress;
                     if (data.similarity !== null) data.similarity = Math.round(status.similarity * 1000) / 10;
                     // if the process hasn't ended it, check it again within 500ms
-                    if (status.status !== "completed") setTimeout(checkStatusFunc, 200);
+                    if (status.status !== "completed" && status.status != "failed") setTimeout(checkStatusFunc, 200);
                     else {
                         data.reconstructed = true;
                         data.started = false;
+                        if (status.status === "failed") {
+                            data.showSnackbar = true;
+                            data.error = "Server Error:" + status.error;
+                        }
                     }
                 });
             };

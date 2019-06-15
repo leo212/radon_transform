@@ -19,6 +19,12 @@ export default {
         { key: "sss", name: "Slow Slant Stack" },
         { key: "fss", name: "Fast Slant Stack" }
     ],
+    METHOD_TYPES: [
+        { key: "lsqr", name: "Least Squares" },
+        { key: "cg", name: "Conjugate Gradient" },
+        { key: "gmres", name: "Generalized Minimal RESidual" },
+        { key: "qmr", name: "Quasi-Minimal Residual" }
+    ],
 
     // check status of python server
     checkStatus: function() {
