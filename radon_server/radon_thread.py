@@ -1,8 +1,9 @@
 import time
 import numpy as np
-from scipy import misc, sparse
+from scipy import sparse
 import sys
 from skimage import measure
+from skimage import io
 from threading import Thread
 
 
@@ -80,7 +81,7 @@ class RadonTransformThread(Thread):
 
 
     def calculate_reconstructed_score(self):
-        original_image = misc.imread(self.args["original_file"], flatten=True).astype('float64')
+        original_image = io.imread(self.args["original_file"], flatten=True).astype('float64')
         self.similarity = measure.compare_ssim(original_image, self.reconstructed, data_range=255)
 
     def get_matrix(self, variant, n):
@@ -149,7 +150,7 @@ class RadonTransformThread(Thread):
     def save(self):
         if self.action == "transform":
             # save an image file for preview the radon transform
-            misc.imsave(self.args["target_image"], self.radon)
+            io.imsave(self.args["target_image"], self.radon)
 
             # save the radon file itself
             np.save(self.args["target_file"], self.radon)
@@ -158,7 +159,7 @@ class RadonTransformThread(Thread):
             (w, v) = np.linalg.eig(self.radon.transpose() * self.radon)
             self.cond = np.sqrt(np.max(np.real(v)) - np.min(np.real(v)))
         elif self.action == "reconstruct":
-            misc.imsave(self.args["target_file"], self.reconstructed)
+            io.imsave(self.args["target_file"], self.reconstructed)
 
     def update_progress(self, step, total_steps):
         if self.should_update_progress:
@@ -172,7 +173,7 @@ class RadonTransformThread(Thread):
         if self.action == "transform":
             print(self.get_algorithm_name() + " started for " + self.args["source_file"])
             # load image file from disk
-            image = misc.imread(self.args["source_file"], flatten=True).astype('float64')
+            image = io.imread(self.args["source_file"], flatten=True).astype('float64')
             n = int(np.shape(image)[0])
 
         elif self.action == "build_matrix":
