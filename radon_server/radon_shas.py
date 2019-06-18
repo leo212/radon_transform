@@ -147,40 +147,40 @@ class SHASTransform(RadonTransformThread):
 
         return result
 
-    def cv2skewx(self, image, p):
-        rows, cols = image.shape
-        d = p * cols
-        pts1 = np.float32(
-            [[0, 0],
-             [cols, 0],
-             [cols, rows],
-             [0, rows]]
-        )
-        pts2 = np.float32(
-            [[d, 0],
-             [cols + d, 0],
-             [cols - d, rows],
-             [0 - d, rows]]
-        )
-        padded_image = cv2.copyMakeBorder(image, 0, 0, cols // 2, cols // 2, cv2.BORDER_CONSTANT)
-        M = cv2.getPerspectiveTransform(pts1, pts2)
-        return cv2.warpPerspective(padded_image, M, (cols * 2, rows))
+    # def cv2skewx(self, image, p):
+    #     rows, cols = image.shape
+    #     d = p * cols
+    #     pts1 = np.float32(
+    #         [[0, 0],
+    #          [cols, 0],
+    #          [cols, rows],
+    #          [0, rows]]
+    #     )
+    #     pts2 = np.float32(
+    #         [[d, 0],
+    #          [cols + d, 0],
+    #          [cols - d, rows],
+    #          [0 - d, rows]]
+    #     )
+    #     padded_image = cv2.copyMakeBorder(image, 0, 0, cols // 2, cols // 2, cv2.BORDER_CONSTANT)
+    #     M = cv2.getPerspectiveTransform(pts1, pts2)
+    #     return cv2.warpPerspective(padded_image, M, (cols * 2, rows))
 
-    def cv2skewy(self, image, p):
-        rows, cols = image.shape
-        d = p * cols
-        pts1 = np.float32(
-            [[0, 0],
-             [cols, 0],
-             [cols, rows],
-             [0, rows]]
-        )
-        pts2 = np.float32(
-            [[0, d],
-             [cols, -d],
-             [cols, rows - d],
-             [0, rows + d]]
-        )
-        padded_image = cv2.copyMakeBorder(image, rows // 2, rows // 2, 0, 0, cv2.BORDER_CONSTANT)
-        M = cv2.getPerspectiveTransform(pts1, pts2)
-        return cv2.warpPerspective(padded_image, M, (cols, rows * 2))
+    # def cv2skewy(self, image, p):
+    #     rows, cols = image.shape
+    #     d = p * cols
+    #     pts1 = np.float32(
+    #         [[0, 0],
+    #          [cols, 0],
+    #          [cols, rows],
+    #          [0, rows]]
+    #     )
+    #     pts2 = np.float32(
+    #         [[0, d],
+    #          [cols, -d],
+    #          [cols, rows - d],
+    #          [0, rows + d]]
+    #     )
+    #     padded_image = cv2.copyMakeBorder(image, rows // 2, rows // 2, 0, 0, cv2.BORDER_CONSTANT)
+    #     M = cv2.getPerspectiveTransform(pts1, pts2)
+    #     return cv2.warpPerspective(padded_image, M, (cols, rows * 2))

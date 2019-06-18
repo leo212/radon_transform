@@ -78,8 +78,8 @@ class RadonTransformThread(Thread):
         self.matrix = sparse.hstack(cols)
 
     def calculate_reconstructed_score(self):
-        original_image = io.imread(self.args["original_file"], flatten=True).astype('float64')
-        self.similarity = measure.compare_ssim(original_image * self.reconstruct_multiply, self.reconstructed,
+        original_image = io.imread(self.args["original_file"], as_gray=True).astype('float64') * 255
+        self.similarity = measure.compare_ssim(original_image, self.reconstructed,
                                                data_range=255)
 
     def get_matrix(self, variant, n):
@@ -91,7 +91,7 @@ class RadonTransformThread(Thread):
 
     def reconstruct_callback(self, xk):
         # evaluate progress by comparing to the last reconstructed image
-        progress = measure.compare_ssim(np.reshape(xk, (self.size, self.size)) * self.reconstruct_multiply,
+        progress = measure.compare_ssim(np.reshape(xk, (self.size, self.size)),
                                         self.reconstructed, data_range=255) * 100
         if progress > self.progress:
             self.progress = progress
@@ -113,13 +113,14 @@ class RadonTransformThread(Thread):
                 reconstructed = sparse.linalg.lsqr(A, R, atol=self.args["tolerance"], btol=self.args["tolerance"])[0]
             elif self.method == "gmres":
                 reconstructed = \
-                sparse.linalg.gmres(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
+                    sparse.linalg.gmres(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[
+                        0]
             elif self.method == "cg":
                 reconstructed = \
-                sparse.linalg.cgs(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
+                    sparse.linalg.cgs(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
             elif self.method == "qmr":
                 reconstructed = \
-                sparse.linalg.qmr(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
+                    sparse.linalg.qmr(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
             else:
                 raise Exception("Unsupported reconstruction method " + self.method)
 
@@ -154,7 +155,8 @@ class RadonTransformThread(Thread):
     def save(self):
         if self.action == "transform":
             # save an image file for preview the radon transform
-            io.imsave(self.args["target_image"], self.radon)
+            io.imsave(self.args["target_image"],
+                      ((self.radon - np.min(np.max(self.radon, 0))) * 255 / (np.max(self.radon) - np.min(self.radon))))
 
             # save the radon file itself
             np.save(self.args["target_file"], self.radon)
@@ -163,7 +165,7 @@ class RadonTransformThread(Thread):
             (w, v) = np.linalg.eig(self.radon.transpose() * self.radon)
             self.cond = np.sqrt(np.max(np.real(v)) - np.min(np.real(v)))
         elif self.action == "reconstruct":
-            io.imsave(self.args["target_file"], np.array((self.reconstructed * 255), dtype='uint8'))
+            io.imsave(self.args["target_file"], np.round(self.reconstructed).astype('uint8'))
 
     def update_progress(self, step, total_steps):
         if self.should_update_progress:
@@ -177,7 +179,7 @@ class RadonTransformThread(Thread):
         if self.action == "transform":
             print(self.get_algorithm_name() + " started for " + self.args["source_file"])
             # load image file from disk
-            image = io.imread(self.args["source_file"], flatten=True).astype('float64')
+            image = io.imread(self.args["source_file"], as_gray=True).astype('float64') * 255
             n = int(np.shape(image)[0])
 
         elif self.action == "build_matrix":

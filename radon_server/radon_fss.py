@@ -11,7 +11,7 @@ class FastSlantStackTransform(RadonTransformThread):
         return 2
 
     def get_reconstruct_multiply(self):
-        return 1/255
+        return 1
 
     def get_algorithm_name(self):
         return "fss"
