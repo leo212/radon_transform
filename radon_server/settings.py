@@ -51,6 +51,7 @@ MIDDLEWARE = [
 
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:8081",
+    "https://radonclient.z6.web.core.windows.net/"
 ]
 
 CORS_ALLOW_HEADERS = (
