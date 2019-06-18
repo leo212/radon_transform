@@ -2,7 +2,7 @@ import time
 import numpy as np
 from scipy import misc, sparse
 import sys
-from skimage.measure import compare_ssim as ssim
+from skimage import measure
 from threading import Thread
 
 
@@ -81,7 +81,7 @@ class RadonTransformThread(Thread):
 
     def calculate_reconstructed_score(self):
         original_image = misc.imread(self.args["original_file"], flatten=True).astype('float64')
-        self.similarity = ssim(original_image, self.reconstructed, data_range=255)
+        self.similarity = measure.compare_ssim(original_image, self.reconstructed, data_range=255)
 
     def get_matrix(self, variant, n):
         # load matrix file
@@ -92,7 +92,7 @@ class RadonTransformThread(Thread):
 
     def reconstruct_callback(self, xk):
         # evaluate progress by comparing to the last reconstructed image
-        progress = ssim(np.reshape(xk, (self.size, self.size)) * self.reconstruct_multiply, self.reconstructed, data_range=255) * 100
+        progress = measure.compare_ssim(np.reshape(xk, (self.size, self.size)) * self.reconstruct_multiply, self.reconstructed, data_range=255) * 100
         if progress > self.progress:
             self.progress = progress
         self.took = (time.time() - self.startTime) * 1000
