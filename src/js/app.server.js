@@ -1,5 +1,6 @@
 export default {
-    PYTHON_SERVER_URL: "http://localhost:8000",
+    PYTHON_SERVER_URL:
+        process.env.NODE_ENV === "production" ? "https://radon-server.azurewebsites.net" : "http://localhost:8000",
     GET_IMAGE_SERVICE: "/get_image/",
     GET_IMAGE_RESULT_SERVICE: "/get_result/",
     GET_IMAGE_RECONSTRUCTED_SERVICE: "/get_reconstructed/",
