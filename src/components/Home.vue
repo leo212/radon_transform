@@ -36,7 +36,7 @@
                 </div>
                 <div>
                     <file-upload
-                        post-action="{{uploadUrl}}"
+                        :post-action="uploadUrl"
                         :multiple="true"
                         extensions="gif,jpg,jpeg,png,webp"
                         accept="image/png,image/gif,image/jpeg,image/webp"
