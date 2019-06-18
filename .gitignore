@@ -2,6 +2,8 @@ package-lock.json
 .DS_Store
 node_modules
 /dist
+__pycache__
+/radon_server/static
 
 # local env files
 .env.local
@@ -20,3 +22,4 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+*.npz
