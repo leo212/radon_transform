@@ -5,6 +5,7 @@ import sys
 from skimage import measure
 from skimage import io
 from threading import Thread
+import traceback
 
 
 def get_matrix_filename(algorithm, variant, size):
@@ -56,33 +57,30 @@ class RadonTransformThread(Thread):
         return True
 
     def run_build_matrix(self, n, variant):
-        try:
-            cols = []
-            progress = 0
-            for i in range(n):
-                for j in range(n):
-                    x = np.zeros((n, n), dtype=np.float64)
-                    x[i, j] = 255
-                    self.should_update_progress = False
-                    self.run_transform(x, n, variant)
-                    self.should_update_progress = True
-                    rx = self.radon
-                    nn = (n * self.ratio * n * self.ratio)
-                    col = sparse.coo_matrix((np.reshape(rx, (nn)), (np.arange(nn), np.zeros(nn))))
-                    cols.append(col)
-                    progress += 1
-                    self.matrix_size = sys.getsizeof(cols)
-                    self.update_progress(progress, n * n)
+        cols = []
+        progress = 0
+        for i in range(n):
+            for j in range(n):
+                x = np.zeros((n, n), dtype=np.float64)
+                x[i, j] = 255
+                self.should_update_progress = False
+                self.run_transform(x, n, variant)
+                self.should_update_progress = True
+                rx = self.radon
+                nn = int(n * self.ratio * n * self.ratio)
+                col = sparse.coo_matrix(
+                    (np.reshape(rx, (nn)), (np.arange(nn).astype("int"), np.zeros(nn, dtype='int'))))
+                cols.append(col)
+                progress += 1
+                self.matrix_size = sys.getsizeof(cols)
+                self.update_progress(progress, n * n)
 
-            self.matrix = sparse.hstack(cols)
-        except Exception as e:
-            self.update_progress(100, 100)
-            self.error = e
-
+        self.matrix = sparse.hstack(cols)
 
     def calculate_reconstructed_score(self):
         original_image = io.imread(self.args["original_file"], flatten=True).astype('float64')
-        self.similarity = measure.compare_ssim(original_image, self.reconstructed, data_range=255)
+        self.similarity = measure.compare_ssim(original_image * self.reconstruct_multiply, self.reconstructed,
+                                               data_range=255)
 
     def get_matrix(self, variant, n):
         # load matrix file
@@ -93,7 +91,8 @@ class RadonTransformThread(Thread):
 
     def reconstruct_callback(self, xk):
         # evaluate progress by comparing to the last reconstructed image
-        progress = measure.compare_ssim(np.reshape(xk, (self.size, self.size)) * self.reconstruct_multiply, self.reconstructed, data_range=255) * 100
+        progress = measure.compare_ssim(np.reshape(xk, (self.size, self.size)) * self.reconstruct_multiply,
+                                        self.reconstructed, data_range=255) * 100
         if progress > self.progress:
             self.progress = progress
         self.took = (time.time() - self.startTime) * 1000
@@ -113,11 +112,14 @@ class RadonTransformThread(Thread):
             elif self.method == "lsqr":
                 reconstructed = sparse.linalg.lsqr(A, R, atol=self.args["tolerance"], btol=self.args["tolerance"])[0]
             elif self.method == "gmres":
-                reconstructed = sparse.linalg.gmres(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
+                reconstructed = \
+                sparse.linalg.gmres(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
             elif self.method == "cg":
-                reconstructed = sparse.linalg.cgs(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
+                reconstructed = \
+                sparse.linalg.cgs(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
             elif self.method == "qmr":
-                reconstructed = sparse.linalg.qmr(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
+                reconstructed = \
+                sparse.linalg.qmr(AT * A, AT * R, tol=self.args["tolerance"], callback=self.reconstruct_callback)[0]
             else:
                 raise Exception("Unsupported reconstruction method " + self.method)
 
@@ -125,6 +127,7 @@ class RadonTransformThread(Thread):
             self.calculate_reconstructed_score()
             self.update_progress(100, 100)
         except Exception as e:
+            traceback.print_exc()
             self.update_progress(100, 100)
             self.error = e
 
@@ -144,6 +147,7 @@ class RadonTransformThread(Thread):
 
             self.took = (time.time() - self.startTime) * 1000
         except Exception as e:
+            traceback.print_exc()
             self.update_progress(100, 100)
             self.error = e
 
@@ -159,7 +163,7 @@ class RadonTransformThread(Thread):
             (w, v) = np.linalg.eig(self.radon.transpose() * self.radon)
             self.cond = np.sqrt(np.max(np.real(v)) - np.min(np.real(v)))
         elif self.action == "reconstruct":
-            io.imsave(self.args["target_file"], self.reconstructed)
+            io.imsave(self.args["target_file"], np.array((self.reconstructed * 255), dtype='uint8'))
 
     def update_progress(self, step, total_steps):
         if self.should_update_progress:
