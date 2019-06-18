@@ -25,7 +25,7 @@ SECRET_KEY = 'bwt$8^jdudo+46y*&@f+x4%!$e48g@0-%542jvg!8p#@1^$7c2'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["radon-server.azurewebsites.net"]
 
 
 # Application definition
