@@ -17,13 +17,13 @@
                     >
                 </md-select>
             </md-field>
-            <md-field v-if="selectedAlgorithm === 'shas'">
-                <label for="variant">Variant</label>
-                <md-select v-model="variant" name="variant" id="variant">
-                    <md-option value="default">Default</md-option>
-                    <md-option v-if="selectedAlgorithm === 'shas'" value="cv2">CV2</md-option>
-                </md-select>
-            </md-field>
+            <!--<md-field v-if="selectedAlgorithm === 'shas'">-->
+            <!--<label for="variant">Variant</label>-->
+            <!--<md-select v-model="variant" name="variant" id="variant">-->
+            <!--<md-option value="default">Default</md-option>-->
+            <!--<md-option v-if="selectedAlgorithm === 'shas'" value="cv2">CV2</md-option>-->
+            <!--</md-select>-->
+            <!--</md-field>-->
             <div>
                 <md-button class="transformButton md-raised md-primary" :disabled="animate" @click="runTransform()"
                     >Transform</md-button

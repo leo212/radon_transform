@@ -1,6 +1,6 @@
 import math
 
-import cv2
+# import cv2
 import numpy as np
 from radon_server.radon_thread import RadonTransformThread
 
@@ -24,11 +24,8 @@ class SHASTransform(RadonTransformThread):
         return result
 
     def shas_radon(self, image, n, variant):
-        if variant == "cv2":
-            self.shas_cv2(image, n)
-        else:
-            factors_table = self.build_factors_table(n)
-            self.shas(image, n, factors_table)
+        factors_table = self.build_factors_table(n)
+        self.shas(image, n, factors_table)
 
     def shas(self, image, n, factors_table):
         # horizontal lines
@@ -45,18 +42,18 @@ class SHASTransform(RadonTransformThread):
             self.radon[:, n + s] = sum(np.transpose(skewed))
             self.update_progress(n + s, n * 2)
 
-    def shas_cv2(self, image, n):
-        # horizontal lines
-        for s in range(n):
-            skewed = self.cv2skewx(image, float(s / n - 0.5)).astype('float64')
-            self.radon[:, n + (n - s - 1)] = np.roll(np.flipud(sum(skewed)), 1, 0)
-            self.update_progress(s, n * 2)
-
-        # vertical lines
-        for s in range(n):
-            skewed = self.cv2skewy(image, float((n-s-1) / n - 0.5)).astype('float64')
-            self.radon[:, n - s - 1] = sum(np.transpose(skewed))
-            self.update_progress(n + s, n * 2)
+    # def shas_cv2(self, image, n):
+    #     # horizontal lines
+    #     for s in range(n):
+    #         skewed = self.cv2skewx(image, float(s / n - 0.5)).astype('float64')
+    #         self.radon[:, n + (n - s - 1)] = np.roll(np.flipud(sum(skewed)), 1, 0)
+    #         self.update_progress(s, n * 2)
+    #
+    #     # vertical lines
+    #     for s in range(n):
+    #         skewed = self.cv2skewy(image, float((n-s-1) / n - 0.5)).astype('float64')
+    #         self.radon[:, n - s - 1] = sum(np.transpose(skewed))
+    #         self.update_progress(n + s, n * 2)
 
     def build_factors_table_for_p(self, n, p):
         factors = np.zeros(n, dtype='float64')
