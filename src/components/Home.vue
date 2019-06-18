@@ -36,7 +36,7 @@
                 </div>
                 <div>
                     <file-upload
-                        post-action="http://localhost:8000/upload/"
+                        post-action="{{uploadUrl}}"
                         :multiple="true"
                         extensions="gif,jpg,jpeg,png,webp"
                         accept="image/png,image/gif,image/jpeg,image/webp"
@@ -89,7 +89,8 @@ export default {
             files: [],
             resultFiles: [],
             showSnackbar: false,
-            error: ""
+            error: "",
+            uploadUrl: server.PYTHON_SERVER_URL + server.UPLOAD_SERVICE
         };
     },
     created: function() {

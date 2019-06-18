@@ -11,6 +11,7 @@ export default {
     BUILD_MATRIX_SERVICE: "/build_matrix/",
     IS_MATRIX_AVAILABLE_SERVICE: "/is_matrix_available/",
     GET_STATUS_SERVICE: "/get_job_status/",
+    UPLOAD_SERVICE: "/upload",
     SERVER_STATUS_SERVICE: "/test/",
     TRANSFORM_TYPES: [
         { key: "dss", name: "Direct Slant Stack" },
