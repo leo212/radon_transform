@@ -24,7 +24,6 @@ export default {
     METHOD_TYPES: [
         { key: "lsqr", name: "Least Squares" },
         { key: "cg", name: "Conjugate Gradient" },
-        { key: "gmres", name: "Generalized Minimal RESidual" },
         { key: "qmr", name: "Quasi-Minimal Residual" }
     ],
 
